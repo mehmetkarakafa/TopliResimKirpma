@@ -1,9 +1,10 @@
 /**
- * Toplu Kırp — Toplu & Çoklu Fotoğraf Kırpma Aracı
- * 
- * 1. Mod: Toplu Fotoğraf Kırpma (Bulk Image Cropper + El ile Seçme Modal Desteği)
- * 2. Mod: Çoklu Serbest Kırpma (Multi-Crop Studio on Single Image)
- * 
+ * Çoklu Kırp — Tek Fotoğraftan Çoklu Serbest Kırpma Aracı
+ *
+ * - Tek fotoğraf üzerinde sınırsız serbest kırpma alanı
+ * - İşaretli alanlarda renk tabanlı (çevrimdışı) arka plan silme
+ * - PNG / JPEG / WebP olarak tek tek veya ZIP halinde dışa aktarma
+ *
  * Tamamen istemci taraflı, modern, performanslı ve güvenli.
  */
 
@@ -23,41 +24,21 @@
   ];
 
   // ==========================================================================
-  // 1. GENEL UYGULAMA DURUMU (GLOBAL APP STATE)
+  // GENEL UYGULAMA DURUMU (GLOBAL APP STATE)
   // ==========================================================================
   const appState = {
-    currentMode: 'bulk', // 'bulk' | 'multi'
     isProcessing: false
   };
 
   // ==========================================================================
-  // 2. MOD 1 DURUMU: TOPLU KIRPMA (BULK CROP STATE)
-  // ==========================================================================
-  const bulkState = {
-    images: [], // { id, file, name, originalW, originalH, img, objectUrl, size, type, customCrop, customFilename }
-    settings: {
-      ratio: '1:1', // 'free', '1:1', '4:3', '3:2', '16:9', '9:16', '3:4', '2:3', 'custom'
-      customW: 1,
-      customH: 1,
-      position: 'center', // 'center', 'top', 'bottom', 'left', 'right', 'custom'
-      posX: 50,
-      posY: 50,
-      scale: 100,
-      format: 'original', // 'original', 'jpeg', 'png', 'webp'
-      quality: 90,
-      maxWidth: 0,
-      namingPattern: 'original', // 'original' | 'suffix' | 'custom'
-      customPrefix: 'kirpilmis'
-    }
-  };
-
-  // ==========================================================================
-  // 3. MOD 2 DURUMU: ÇOKLU SERBEST KIRPMA (MULTI-CROP STUDIO STATE)
+  // ÇOKLU SERBEST KIRPMA DURUMU (MULTI-CROP STUDIO STATE)
   // ==========================================================================
   const multiState = {
     image: null, // { file, name, objectUrl, img, naturalWidth, naturalHeight }
-    cropBoxes: [], // [ { id, x, y, width, height, color, customName } ]
+    // bg: null | { tolerance, holes } — arka planı silinmiş alanlar için ayarlar
+    cropBoxes: [], // [ { id, x, y, width, height, color, customName, bg } ]
     selectedId: null,
+    checkedIds: new Set(), // Sağ paneldeki onay kutularıyla işaretlenen alanlar
     zoom: 1.0,
     history: {
       stack: [],
@@ -73,24 +54,9 @@
     settings: {
       format: 'png', // 'png', 'jpeg', 'webp'
       quality: 90,
-      prefix: 'kirpim'
-    }
-  };
-
-  // ==========================================================================
-  // 4. EL İLE KIRPMA MODAL DURUMU (MANUAL CROP MODAL STATE)
-  // ==========================================================================
-  const modalState = {
-    isOpen: false,
-    targetImg: null, // Hangi görsele ait olduğu
-    box: { x: 0, y: 0, width: 100, height: 100 },
-    ratio: 'free', // 'free', '1:1', '4:3', '16:9', '9:16'
-    interaction: {
-      mode: null, // 'drawing' | 'moving' | 'resizing'
-      pointerId: null,
-      startNatural: { x: 0, y: 0 },
-      startBox: null,
-      handle: null
+      prefix: 'kirpim',
+      bgTolerance: 25,
+      bgHoles: false
     }
   };
 
@@ -98,53 +64,9 @@
   // DOM ELEMENTLERİ
   // ==========================================================================
   const DOM = {
-    // Mod Sekmeleri
-    tabBulkCrop: document.getElementById('tabBulkCrop'),
-    tabMultiCrop: document.getElementById('tabMultiCrop'),
-    bulkCropView: document.getElementById('bulkCropView'),
-    multiCropView: document.getElementById('multiCropView'),
     globalNotice: document.getElementById('globalNotice'),
     toastContainer: document.getElementById('toastContainer'),
 
-    // Toplu Kırpma DOM
-    dropzone: document.getElementById('dropzone'),
-    fileInput: document.getElementById('fileInput'),
-    browseBtn: document.getElementById('browseBtn'),
-    ratioOptions: document.getElementById('ratioOptions'),
-    ratioHint: document.getElementById('ratioHint'),
-    customRatioRow: document.getElementById('customRatioRow'),
-    customRatioW: document.getElementById('customRatioW'),
-    customRatioH: document.getElementById('customRatioH'),
-    btnOpenManualCropMaster: document.getElementById('btnOpenManualCropMaster'),
-    posPresets: document.getElementById('posPresets'),
-    posHint: document.getElementById('posHint'),
-    sliderPosX: document.getElementById('sliderPosX'),
-    valPosX: document.getElementById('valPosX'),
-    sliderPosY: document.getElementById('sliderPosY'),
-    valPosY: document.getElementById('valPosY'),
-    sliderScale: document.getElementById('sliderScale'),
-    valScale: document.getElementById('valScale'),
-    formatSelect: document.getElementById('formatSelect'),
-    bulkNamePatternSelect: document.getElementById('bulkNamePatternSelect'),
-    bulkCustomNameInput: document.getElementById('bulkCustomNameInput'),
-    qualityRow: document.getElementById('qualityRow'),
-    sliderQuality: document.getElementById('sliderQuality'),
-    valQuality: document.getElementById('valQuality'),
-    maxWidthInput: document.getElementById('maxWidthInput'),
-    imageCountBadge: document.getElementById('imageCountBadge'),
-    imageCountText: document.getElementById('imageCountText'),
-    summarySubtext: document.getElementById('summarySubtext'),
-    clearAllBtn: document.getElementById('clearAllBtn'),
-    processZipBtn: document.getElementById('processZipBtn'),
-    btnProcessText: document.getElementById('btnProcessText'),
-    progressCard: document.getElementById('progressCard'),
-    progressStatus: document.getElementById('progressStatus'),
-    progressPercent: document.getElementById('progressPercent'),
-    progressBarFill: document.getElementById('progressBarFill'),
-    emptyState: document.getElementById('emptyState'),
-    imageGrid: document.getElementById('imageGrid'),
-
-    // Çoklu Serbest Kırpma DOM
     mcUploadSection: document.getElementById('mcUploadSection'),
     mcDropzone: document.getElementById('mcDropzone'),
     mcFileInput: document.getElementById('mcFileInput'),
@@ -186,31 +108,22 @@
     mcProgressPercent: document.getElementById('mcProgressPercent'),
     mcProgressBarFill: document.getElementById('mcProgressBarFill'),
 
-    // El ile Kırpma Modalı DOM
-    manualCropModal: document.getElementById('manualCropModal'),
-    mcModalTitle: document.getElementById('mcModalTitle'),
-    mcModalSubtitle: document.getElementById('mcModalSubtitle'),
-    mcModalCloseBtn: document.getElementById('mcModalCloseBtn'),
-    modalRatioOptions: document.getElementById('modalRatioOptions'),
-    modalCoordBadge: document.getElementById('modalCoordBadge'),
-    modalViewport: document.getElementById('modalViewport'),
-    modalStage: document.getElementById('modalStage'),
-    modalImg: document.getElementById('modalImg'),
-    modalOverlay: document.getElementById('modalOverlay'),
-    modalResetBtn: document.getElementById('modalResetBtn'),
-    modalCancelBtn: document.getElementById('modalCancelBtn'),
-    modalApplyAllBtn: document.getElementById('modalApplyAllBtn'),
-    modalApplySingleBtn: document.getElementById('modalApplySingleBtn')
+    // Arka Plan Silme Paneli
+    mcCheckAll: document.getElementById('mcCheckAll'),
+    mcCheckedCount: document.getElementById('mcCheckedCount'),
+    mcBgTolerance: document.getElementById('mcBgTolerance'),
+    mcBgToleranceVal: document.getElementById('mcBgToleranceVal'),
+    mcBgHoles: document.getElementById('mcBgHoles'),
+    mcRemoveBgBtn: document.getElementById('mcRemoveBgBtn'),
+    mcRestoreBgBtn: document.getElementById('mcRestoreBgBtn')
   };
 
   // ==========================================================================
   // BAŞLATMA (INITIALIZATION)
   // ==========================================================================
   function init() {
-    setupModeSwitcher();
-    setupBulkCropper();
     setupMultiCropper();
-    setupManualCropModal();
+    setupBackgroundRemoval();
     setupGlobalShortcuts();
     checkJSZipAvailability();
   }
@@ -225,987 +138,32 @@
   }
 
   // ==========================================================================
-  // MOD GEÇİŞ YÖNETİCİSİ (MODE SWITCHER)
-  // ==========================================================================
-  function setupModeSwitcher() {
-    DOM.tabBulkCrop.addEventListener('click', () => switchMode('bulk'));
-    DOM.tabMultiCrop.addEventListener('click', () => switchMode('multi'));
-  }
-
-  function switchMode(mode) {
-    if (appState.currentMode === mode || appState.isProcessing) return;
-
-    appState.currentMode = mode;
-
-    if (mode === 'bulk') {
-      DOM.tabBulkCrop.classList.add('active');
-      DOM.tabMultiCrop.classList.remove('active');
-      DOM.bulkCropView.classList.remove('hidden');
-      DOM.multiCropView.classList.add('hidden');
-    } else {
-      DOM.tabMultiCrop.classList.add('active');
-      DOM.tabBulkCrop.classList.remove('active');
-      DOM.multiCropView.classList.remove('hidden');
-      DOM.bulkCropView.classList.add('hidden');
-
-      if (multiState.image) {
-        requestAnimationFrame(() => {
-          mcFitToScreen();
-          mcRenderAllBoxes();
-        });
-      }
-    }
-  }
-
-  // ==========================================================================
   // KLAVYE KISAYOLLARI (GLOBAL SHORTCUTS)
   // ==========================================================================
   function setupGlobalShortcuts() {
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (!multiState.image) return;
 
-      // Modal açıkken ESC ile kapat
-      if (modalState.isOpen && e.key === 'Escape') {
-        closeManualCropModal();
-        return;
-      }
-
-      if (appState.currentMode === 'multi' && multiState.image) {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
-          e.preventDefault();
-          mcUndo();
-        } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
-          e.preventDefault();
-          mcRedo();
-        } else if ((e.key === 'Delete' || e.key === 'Backspace') && multiState.selectedId) {
-          e.preventDefault();
-          mcDeleteSelectedBox();
-        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && multiState.selectedId) {
-          e.preventDefault();
-          mcDuplicateSelectedBox();
-        }
-      }
-    });
-  }
-
-  // ==========================================================================
-  // ==========================================================================
-  // BÖLÜM 1: TOPLU FOTOĞRAF KIRPMA (MOD 1 MANTIĞI)
-  // ==========================================================================
-  // ==========================================================================
-
-  function setupBulkCropper() {
-    // Sürükle ve Bırak
-    ['dragenter', 'dragover'].forEach(name => {
-      DOM.dropzone.addEventListener(name, (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
-        e.stopPropagation();
-        DOM.dropzone.classList.add('dragover');
-      });
-    });
-
-    ['dragleave', 'drop'].forEach(name => {
-      DOM.dropzone.addEventListener(name, (e) => {
+        mcUndo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
         e.preventDefault();
-        e.stopPropagation();
-        DOM.dropzone.classList.remove('dragover');
-      });
-    });
-
-    DOM.dropzone.addEventListener('drop', (e) => {
-      const files = e.dataTransfer.files;
-      if (files && files.length > 0) {
-        bulkHandleFiles(files);
-      }
-    });
-
-    DOM.dropzone.addEventListener('click', (e) => {
-      if (!appState.isProcessing && e.target !== DOM.fileInput) {
-        DOM.fileInput.click();
-      }
-    });
-
-    DOM.fileInput.addEventListener('click', e => e.stopPropagation());
-
-    DOM.fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length > 0) {
-        bulkHandleFiles(e.target.files);
-        DOM.fileInput.value = '';
-      }
-    });
-
-    // En-Boy Oranı Butonları
-    DOM.ratioOptions.addEventListener('click', (e) => {
-      const btn = e.target.closest('.btn-pill');
-      if (!btn) return;
-
-      DOM.ratioOptions.querySelectorAll('.btn-pill').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const ratio = btn.dataset.ratio;
-      bulkState.settings.ratio = ratio;
-
-      if (ratio === 'custom') {
-        DOM.customRatioRow.classList.remove('hidden');
-        bulkState.settings.customW = Math.max(1, parseFloat(DOM.customRatioW.value) || 1);
-        bulkState.settings.customH = Math.max(1, parseFloat(DOM.customRatioH.value) || 1);
-        DOM.ratioHint.textContent = `Özel (${bulkState.settings.customW}:${bulkState.settings.customH})`;
-      } else {
-        DOM.customRatioRow.classList.add('hidden');
-        DOM.ratioHint.textContent = btn.textContent;
-      }
-
-      bulkOnSettingsChanged();
-    });
-
-    [DOM.customRatioW, DOM.customRatioH].forEach(input => {
-      input.addEventListener('input', () => {
-        bulkState.settings.customW = Math.max(1, parseFloat(DOM.customRatioW.value) || 1);
-        bulkState.settings.customH = Math.max(1, parseFloat(DOM.customRatioH.value) || 1);
-        DOM.ratioHint.textContent = `Özel (${bulkState.settings.customW}:${bulkState.settings.customH})`;
-        bulkOnSettingsChanged();
-      });
-    });
-
-    // Görsel Üzerinde El ile Seçme Butonu (Master)
-    DOM.btnOpenManualCropMaster.addEventListener('click', () => {
-      if (bulkState.images.length === 0) {
-        showToast('El ile kırpma yapabilmek için lütfen önce en az bir fotoğraf yükleyin.', 'warning');
-        return;
-      }
-      openManualCropModal(bulkState.images[0]);
-    });
-
-    // Konum Önayarları
-    DOM.posPresets.addEventListener('click', (e) => {
-      const btn = e.target.closest('.btn-pos');
-      if (!btn) return;
-
-      DOM.posPresets.querySelectorAll('.btn-pos').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const pos = btn.dataset.pos;
-      bulkState.settings.position = pos;
-
-      switch (pos) {
-        case 'center': bulkState.settings.posX = 50; bulkState.settings.posY = 50; break;
-        case 'top': bulkState.settings.posX = 50; bulkState.settings.posY = 0; break;
-        case 'bottom': bulkState.settings.posX = 50; bulkState.settings.posY = 100; break;
-        case 'left': bulkState.settings.posX = 0; bulkState.settings.posY = 50; break;
-        case 'right': bulkState.settings.posX = 100; bulkState.settings.posY = 50; break;
-      }
-
-      DOM.sliderPosX.value = bulkState.settings.posX;
-      DOM.sliderPosY.value = bulkState.settings.posY;
-      DOM.valPosX.textContent = `${bulkState.settings.posX}%`;
-      DOM.valPosY.textContent = `${bulkState.settings.posY}%`;
-      DOM.posHint.textContent = `X: ${bulkState.settings.posX}% / Y: ${bulkState.settings.posY}%`;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.sliderPosX.addEventListener('input', (e) => {
-      bulkState.settings.posX = parseInt(e.target.value, 10);
-      DOM.valPosX.textContent = `${bulkState.settings.posX}%`;
-      DOM.posPresets.querySelectorAll('.btn-pos').forEach(b => b.classList.remove('active'));
-      DOM.posHint.textContent = `X: ${bulkState.settings.posX}% / Y: ${bulkState.settings.posY}%`;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.sliderPosY.addEventListener('input', (e) => {
-      bulkState.settings.posY = parseInt(e.target.value, 10);
-      DOM.valPosY.textContent = `${bulkState.settings.posY}%`;
-      DOM.posPresets.querySelectorAll('.btn-pos').forEach(b => b.classList.remove('active'));
-      DOM.posHint.textContent = `X: ${bulkState.settings.posX}% / Y: ${bulkState.settings.posY}%`;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.sliderScale.addEventListener('input', (e) => {
-      bulkState.settings.scale = parseInt(e.target.value, 10);
-      DOM.valScale.textContent = `${bulkState.settings.scale}%`;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.formatSelect.addEventListener('change', (e) => {
-      bulkState.settings.format = e.target.value;
-      if (e.target.value === 'jpeg' || e.target.value === 'webp' || e.target.value === 'original') {
-        DOM.qualityRow.classList.remove('hidden');
-      } else {
-        DOM.qualityRow.classList.add('hidden');
-      }
-      bulkOnSettingsChanged();
-    });
-
-    // Dosya Adlandırma Şablonu
-    DOM.bulkNamePatternSelect.addEventListener('change', (e) => {
-      bulkState.settings.namingPattern = e.target.value;
-      if (e.target.value === 'custom') {
-        DOM.bulkCustomNameInput.classList.remove('hidden');
-      } else {
-        DOM.bulkCustomNameInput.classList.add('hidden');
-      }
-      bulkRenderAllCards();
-    });
-
-    DOM.bulkCustomNameInput.addEventListener('input', (e) => {
-      bulkState.settings.customPrefix = e.target.value.trim() || 'gorsel';
-      bulkRenderAllCards();
-    });
-
-    DOM.sliderQuality.addEventListener('input', (e) => {
-      bulkState.settings.quality = parseInt(e.target.value, 10);
-      DOM.valQuality.textContent = `%${bulkState.settings.quality}`;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.maxWidthInput.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value, 10);
-      bulkState.settings.maxWidth = val > 0 ? val : 0;
-      bulkOnSettingsChanged();
-    });
-
-    DOM.clearAllBtn.addEventListener('click', bulkClearAllImages);
-    DOM.processZipBtn.addEventListener('click', bulkProcessAndDownloadZip);
-  }
-
-  let bulkDebounce = null;
-  function bulkOnSettingsChanged() {
-    if (bulkState.images.length === 0) return;
-    if (bulkDebounce) clearTimeout(bulkDebounce);
-    bulkDebounce = setTimeout(() => {
-      const cards = DOM.imageGrid.querySelectorAll('.image-card');
-      cards.forEach((card) => {
-        const id = card.dataset.id;
-        const imgData = bulkState.images.find(item => item.id === id);
-        if (imgData) bulkRenderCardPreview(card, imgData);
-      });
-    }, 40);
-  }
-
-  async function bulkHandleFiles(fileList) {
-    const files = Array.from(fileList);
-    let addedCount = 0;
-    let duplicateCount = 0;
-    let unsupportedCount = 0;
-    let hasAnimatedGif = false;
-
-    for (const file of files) {
-      if (!file.type.startsWith('image/') && !isImageByExt(file.name)) {
-        unsupportedCount++;
-        continue;
-      }
-      if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
-        hasAnimatedGif = true;
-      }
-      const fileId = `${file.name}_${file.size}_${file.lastModified}`;
-      if (bulkState.images.some(img => img.id === fileId)) {
-        duplicateCount++;
-        continue;
-      }
-
-      try {
-        const imgData = await loadSingleImageFile(file, fileId);
-        imgData.customCrop = null;
-        imgData.customFilename = null;
-        bulkState.images.push(imgData);
-        addedCount++;
-      } catch (err) {
-        showToast(`"${file.name}" okunamadı.`, 'error');
-      }
-    }
-
-    if (hasAnimatedGif) {
-      showNotice(
-        'Önemli Bilgi: GIF dosyalarının tarayıcı Canvas API ile ilk karesi kırpılarak statik görsel formatında dışa aktarılacaktır.',
-        'warning'
-      );
-    }
-
-    if (addedCount > 0) showToast(`${addedCount} adet görsel başarıyla eklendi.`, 'success');
-    if (duplicateCount > 0) showToast(`${duplicateCount} adet yinelenen görsel atlandı.`, 'info');
-    if (unsupportedCount > 0) showToast(`${unsupportedCount} adet desteklenmeyen dosya atlandı.`, 'warning');
-
-    bulkUpdateUI();
-    bulkRenderAllCards();
-  }
-
-  function bulkUpdateUI() {
-    const count = bulkState.images.length;
-    DOM.imageCountBadge.textContent = count;
-    DOM.imageCountText.textContent = 'Görsel Yüklendi';
-
-    if (count === 0) {
-      DOM.emptyState.classList.remove('hidden');
-      DOM.imageGrid.classList.add('hidden');
-      DOM.clearAllBtn.disabled = true;
-      DOM.processZipBtn.disabled = true;
-      DOM.summarySubtext.textContent = 'Kırpma işlemine başlamak için görsel ekleyin.';
-    } else {
-      DOM.emptyState.classList.add('hidden');
-      DOM.imageGrid.classList.remove('hidden');
-      DOM.clearAllBtn.disabled = appState.isProcessing;
-      DOM.processZipBtn.disabled = appState.isProcessing;
-      DOM.summarySubtext.textContent = `${count} adet görsel kırpmaya ve dışa aktarmaya hazır.`;
-    }
-  }
-
-  function bulkRenderAllCards() {
-    DOM.imageGrid.innerHTML = '';
-    bulkState.images.forEach((imgData, index) => {
-      const card = document.createElement('div');
-      card.className = 'image-card';
-      card.dataset.id = imgData.id;
-
-      const outputName = getEffectiveOutputFilename(imgData, index);
-
-      card.innerHTML = `
-        <div class="card-preview-area">
-          <canvas class="card-preview-canvas"></canvas>
-          <div class="card-badges">
-            <span class="card-ratio-badge">--</span>
-            <span class="card-format-badge">${getEffectiveFormatBadge(imgData.type, bulkState.settings.format)}</span>
-            ${imgData.customCrop ? '<span class="card-custom-badge">Özel Kırpma</span>' : ''}
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-filename-row">
-            <span class="card-filename-editable" title="Dosya adını düzenlemek için tıklayın">${escapeHtml(outputName)}</span>
-          </div>
-          <div class="card-meta-list">
-            <div class="card-meta-item">
-              <span class="card-meta-label">Orijinal:</span>
-              <span class="card-meta-val">${imgData.originalW} × ${imgData.originalH} px</span>
-            </div>
-            <div class="card-meta-item">
-              <span class="card-meta-label">Kırpılmış:</span>
-              <span class="card-meta-val highlight card-crop-dims">-- × -- px</span>
-            </div>
-            <div class="card-meta-item">
-              <span class="card-meta-label">Boyut:</span>
-              <span class="card-meta-val">${formatFileSize(imgData.size)}</span>
-            </div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <button type="button" class="btn-card-action btn-card-manual" title="Bu görseli tuval üzerinde el ile kırp">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2v14a2 2 0 0 0 2 2h14"></path><path d="M18 22V8a2 2 0 0 0-2-2H2"></path></svg>
-            El ile Kırp
-          </button>
-          <button type="button" class="btn-card-action btn-card-download" title="Yalnızca bu görseli kırp ve indir">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            İndir
-          </button>
-          <button type="button" class="btn-card-action btn-card-remove" title="Bu görseli listeden kaldır">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            Kaldır
-          </button>
-        </div>
-      `;
-
-      // Dosya Adını Düzenleme (Inline Rename)
-      const nameEl = card.querySelector('.card-filename-editable');
-      nameEl.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'card-filename-input';
-        input.value = imgData.customFilename || outputName;
-        nameEl.replaceWith(input);
-        input.focus();
-        input.select();
-
-        const saveName = () => {
-          const val = input.value.trim();
-          if (val) {
-            imgData.customFilename = val;
-          }
-          bulkRenderAllCards();
-        };
-
-        input.addEventListener('blur', saveName);
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') input.blur();
-          if (e.key === 'Escape') bulkRenderAllCards();
-        });
-      });
-
-      // El ile Kırp Butonu
-      card.querySelector('.btn-card-manual').addEventListener('click', () => {
-        openManualCropModal(imgData);
-      });
-
-      // Kaldır Butonu
-      card.querySelector('.btn-card-remove').addEventListener('click', () => {
-        bulkRemoveImage(imgData.id);
-      });
-
-      // Tekil İndir Butonu
-      card.querySelector('.btn-card-download').addEventListener('click', () => {
-        bulkDownloadSingleImage(imgData, index);
-      });
-
-      DOM.imageGrid.appendChild(card);
-      bulkRenderCardPreview(card, imgData);
-    });
-  }
-
-  function bulkRenderCardPreview(card, imgData) {
-    const canvas = card.querySelector('.card-preview-canvas');
-    if (!canvas) return;
-
-    const crop = calculateBulkCrop(imgData.originalW, imgData.originalH, bulkState.settings, imgData.customCrop);
-    const maxDim = 320;
-    let previewW = crop.dWidth;
-    let previewH = crop.dHeight;
-
-    if (previewW > maxDim || previewH > maxDim) {
-      if (previewW > previewH) {
-        previewH = Math.round(maxDim * (crop.dHeight / crop.dWidth));
-        previewW = maxDim;
-      } else {
-        previewW = Math.round(maxDim * (crop.dWidth / crop.dHeight));
-        previewH = maxDim;
-      }
-    }
-
-    canvas.width = Math.max(1, previewW);
-    canvas.height = Math.max(1, previewH);
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const targetFormat = getOutputMimeType(imgData.type, bulkState.settings.format);
-    if (targetFormat === 'image/jpeg') {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    try {
-      ctx.drawImage(
-        imgData.img,
-        crop.sx, crop.sy, crop.sWidth, crop.sHeight,
-        0, 0, canvas.width, canvas.height
-      );
-    } catch (e) {}
-
-    const ratioBadge = card.querySelector('.card-ratio-badge');
-    const formatBadge = card.querySelector('.card-format-badge');
-    const dimsLabel = card.querySelector('.card-crop-dims');
-
-    if (ratioBadge) {
-      if (imgData.customCrop) {
-        ratioBadge.textContent = 'Özel';
-      } else {
-        ratioBadge.textContent = bulkState.settings.ratio === 'free' ? 'Serbest' : (bulkState.settings.ratio === 'custom' ? `${bulkState.settings.customW}:${bulkState.settings.customH}` : bulkState.settings.ratio);
-      }
-    }
-    if (formatBadge) {
-      formatBadge.textContent = getFormatLabel(targetFormat);
-    }
-    if (dimsLabel) {
-      dimsLabel.textContent = `${crop.dWidth} × ${crop.dHeight} px`;
-    }
-  }
-
-  /**
-   * Toplu kırpma hesaplayıcı: Eğer görselin kendi özel kırpması varsa onu kullanır;
-   * yoksa genel toplu ayarları uygular.
-   */
-  function calculateBulkCrop(origW, origH, settings, customCrop) {
-    if (customCrop) {
-      let dWidth = customCrop.width;
-      let dHeight = customCrop.height;
-      if (settings.maxWidth > 0 && dWidth > settings.maxWidth) {
-        dWidth = settings.maxWidth;
-        dHeight = Math.max(1, Math.round(settings.maxWidth * (customCrop.height / customCrop.width)));
-      }
-      return {
-        sx: customCrop.x,
-        sy: customCrop.y,
-        sWidth: customCrop.width,
-        sHeight: customCrop.height,
-        dWidth,
-        dHeight
-      };
-    }
-
-    const origRatio = origW / origH;
-    let targetRatio = origRatio;
-
-    if (settings.ratio === 'free') {
-      targetRatio = origRatio;
-    } else if (settings.ratio === 'custom') {
-      targetRatio = (settings.customW || 1) / (settings.customH || 1);
-    } else {
-      const parts = settings.ratio.split(':');
-      if (parts.length === 2) targetRatio = parseFloat(parts[0]) / parseFloat(parts[1]);
-    }
-
-    let maxCropW, maxCropH;
-    if (targetRatio > origRatio) {
-      maxCropW = origW;
-      maxCropH = origW / targetRatio;
-    } else {
-      maxCropH = origH;
-      maxCropW = origH * targetRatio;
-    }
-
-    const scaleFactor = Math.max(0.3, Math.min(1.0, (settings.scale || 100) / 100));
-    const sWidth = Math.max(1, maxCropW * scaleFactor);
-    const sHeight = Math.max(1, maxCropH * scaleFactor);
-
-    const maxLeewayX = Math.max(0, origW - sWidth);
-    const maxLeewayY = Math.max(0, origH - sHeight);
-
-    let sx = maxLeewayX * (Math.max(0, Math.min(100, settings.posX ?? 50)) / 100);
-    let sy = maxLeewayY * (Math.max(0, Math.min(100, settings.posY ?? 50)) / 100);
-
-    sx = Math.max(0, Math.min(origW - sWidth, sx));
-    sy = Math.max(0, Math.min(origH - sHeight, sy));
-
-    let dWidth = Math.round(sWidth);
-    let dHeight = Math.round(sHeight);
-
-    if (settings.maxWidth > 0 && dWidth > settings.maxWidth) {
-      dWidth = settings.maxWidth;
-      dHeight = Math.max(1, Math.round(settings.maxWidth / targetRatio));
-    }
-
-    return {
-      sx: Math.round(sx),
-      sy: Math.round(sy),
-      sWidth: Math.round(sWidth),
-      sHeight: Math.round(sHeight),
-      dWidth,
-      dHeight
-    };
-  }
-
-  function getEffectiveOutputFilename(imgData, index) {
-    if (imgData.customFilename) return imgData.customFilename;
-
-    const lastDot = imgData.name.lastIndexOf('.');
-    const base = lastDot !== -1 ? imgData.name.substring(0, lastDot) : imgData.name;
-    const mimeType = getOutputMimeType(imgData.type, bulkState.settings.format);
-    const ext = mimeType === 'image/png' ? '.png' : (mimeType === 'image/webp' ? '.webp' : '.jpg');
-
-    const pattern = bulkState.settings.namingPattern;
-    if (pattern === 'suffix') {
-      return `${base}_kirpilmis${ext}`;
-    } else if (pattern === 'custom') {
-      const prefix = bulkState.settings.customPrefix || 'kirpilmis';
-      return `${prefix}_${pad2(index + 1)}${ext}`;
-    }
-    return `${base}${ext}`;
-  }
-
-  function bulkRemoveImage(id) {
-    const idx = bulkState.images.findIndex(i => i.id === id);
-    if (idx === -1) return;
-    const item = bulkState.images[idx];
-    URL.revokeObjectURL(item.objectUrl);
-    bulkState.images.splice(idx, 1);
-
-    const card = DOM.imageGrid.querySelector(`.image-card[data-id="${id}"]`);
-    if (card) card.remove();
-    bulkUpdateUI();
-    showToast(`"${item.name}" listeden kaldırıldı.`, 'info');
-  }
-
-  function bulkClearAllImages() {
-    if (bulkState.images.length === 0) return;
-    bulkState.images.forEach(i => URL.revokeObjectURL(i.objectUrl));
-    bulkState.images = [];
-    DOM.imageGrid.innerHTML = '';
-    bulkUpdateUI();
-    showToast('Tüm görseller temizlendi.', 'info');
-  }
-
-  function generateBulkCroppedBlob(imgData) {
-    return new Promise((resolve, reject) => {
-      try {
-        const crop = calculateBulkCrop(imgData.originalW, imgData.originalH, bulkState.settings, imgData.customCrop);
-        const canvas = document.createElement('canvas');
-        canvas.width = crop.dWidth;
-        canvas.height = crop.dHeight;
-
-        const ctx = canvas.getContext('2d');
-        const mimeType = getOutputMimeType(imgData.type, bulkState.settings.format);
-
-        if (mimeType === 'image/jpeg') {
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(
-          imgData.img,
-          crop.sx, crop.sy, crop.sWidth, crop.sHeight,
-          0, 0, crop.dWidth, crop.dHeight
-        );
-
-        const quality = (bulkState.settings.quality || 90) / 100;
-        canvas.toBlob((blob) => {
-          if (blob) resolve({ blob, mimeType });
-          else reject(new Error('Canvas Blob dönüşümü başarısız.'));
-        }, mimeType, quality);
-      } catch (err) {
-        reject(err);
+        mcRedo();
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && multiState.selectedId) {
+        e.preventDefault();
+        mcDeleteSelectedBox();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && multiState.selectedId) {
+        e.preventDefault();
+        mcDuplicateSelectedBox();
       }
     });
   }
-
-  async function bulkDownloadSingleImage(imgData, index) {
-    try {
-      showToast(`"${imgData.name}" kırpılıyor...`, 'info');
-      const { blob, mimeType } = await generateBulkCroppedBlob(imgData);
-      const filename = getEffectiveOutputFilename(imgData, index);
-      downloadBlob(blob, filename);
-      showToast(`"${filename}" başarıyla indirildi.`, 'success');
-    } catch (err) {
-      showToast(`"${imgData.name}" kırpılırken hata oluştu.`, 'error');
-    }
-  }
-
-  async function bulkProcessAndDownloadZip() {
-    if (bulkState.images.length === 0 || appState.isProcessing) return;
-
-    appState.isProcessing = true;
-    DOM.processZipBtn.disabled = true;
-    DOM.clearAllBtn.disabled = true;
-    DOM.btnProcessText.textContent = 'İşleniyor...';
-
-    const total = bulkState.images.length;
-    let completed = 0;
-    const processedFiles = [];
-    const usedFilenames = new Set();
-
-    DOM.progressCard.classList.remove('hidden');
-    updateProgressUI(DOM.progressBarFill, DOM.progressPercent, DOM.progressStatus, 0, total, 'Görseller hazırlanıyor...');
-
-    try {
-      for (let i = 0; i < total; i++) {
-        const imgData = bulkState.images[i];
-        updateProgressUI(DOM.progressBarFill, DOM.progressPercent, DOM.progressStatus, i, total, `Kırpılıyor (${i + 1} / ${total}): ${imgData.name}`);
-        await yieldToMain();
-
-        const { blob, mimeType } = await generateBulkCroppedBlob(imgData);
-        const baseName = getEffectiveOutputFilename(imgData, i);
-        const uniqueName = getUniqueFilename(baseName, usedFilenames);
-        usedFilenames.add(uniqueName);
-
-        processedFiles.push({ name: uniqueName, blob });
-        completed++;
-        updateProgressUI(DOM.progressBarFill, DOM.progressPercent, DOM.progressStatus, i + 1, total, `${i + 1} / ${total} görsel işlendi`);
-      }
-
-      updateProgressUI(DOM.progressBarFill, DOM.progressPercent, DOM.progressStatus, total, total, 'ZIP arşivi paketleniyor...');
-      await yieldToMain();
-
-      const zipBlob = await createZipArchive(processedFiles, (pct) => {
-        DOM.progressPercent.textContent = `%${pct}`;
-        DOM.progressBarFill.style.width = `${pct}%`;
-      });
-
-      downloadBlob(zipBlob, 'kirpilmis-gorseller.zip');
-      showToast(`${completed} adet görsel başarıyla kırpıldı ve ZIP olarak indirildi!`, 'success');
-    } catch (err) {
-      showToast(err.message || 'Toplu işlem sırasında hata oluştu.', 'error');
-    } finally {
-      appState.isProcessing = false;
-      DOM.processZipBtn.disabled = false;
-      DOM.clearAllBtn.disabled = false;
-      DOM.btnProcessText.textContent = 'Tüm Görselleri Kırp ve ZIP İndir';
-      setTimeout(() => DOM.progressCard.classList.add('hidden'), 3000);
-    }
-  }
-
 
   // ==========================================================================
   // ==========================================================================
-  // BÖLÜM 2: EL İLE KIRPMA DÜZENLEME MODALI (MANUAL CROP MODAL)
-  // ==========================================================================
-  // ==========================================================================
-
-  let modalBoxEl = null;
-
-  function setupManualCropModal() {
-    DOM.mcModalCloseBtn.addEventListener('click', closeManualCropModal);
-    DOM.modalCancelBtn.addEventListener('click', closeManualCropModal);
-
-    DOM.manualCropModal.addEventListener('click', (e) => {
-      if (e.target === DOM.manualCropModal) closeManualCropModal();
-    });
-
-    // Oran Butonları
-    DOM.modalRatioOptions.addEventListener('click', (e) => {
-      const btn = e.target.closest('.btn-pill-sm');
-      if (!btn) return;
-      DOM.modalRatioOptions.querySelectorAll('.btn-pill-sm').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      modalState.ratio = btn.dataset.ratio;
-
-      if (modalState.ratio !== 'free') {
-        applyRatioToModalBox(modalState.ratio);
-      }
-    });
-
-    // Sıfırla
-    DOM.modalResetBtn.addEventListener('click', () => {
-      if (!modalState.targetImg) return;
-      modalState.targetImg.customCrop = null;
-      const initial = calculateBulkCrop(modalState.targetImg.originalW, modalState.targetImg.originalH, bulkState.settings);
-      modalState.box = { x: initial.sx, y: initial.sy, width: initial.sWidth, height: initial.sHeight };
-      modalRenderBox();
-      showToast('Kırpma alanı genel ayarlara sıfırlandı.', 'info');
-    });
-
-    // Yalnızca Bu Görsele Uygula
-    DOM.modalApplySingleBtn.addEventListener('click', () => {
-      if (!modalState.targetImg) return;
-      modalState.targetImg.customCrop = { ...modalState.box };
-      closeManualCropModal();
-      bulkRenderAllCards();
-      showToast(`Özel el ile kırpma "${modalState.targetImg.name}" görseline uygulandı!`, 'success');
-    });
-
-    // Tüm Görsellere Uygula
-    DOM.modalApplyAllBtn.addEventListener('click', () => {
-      if (!modalState.targetImg) return;
-      const imgW = modalState.targetImg.originalW;
-      const imgH = modalState.targetImg.originalH;
-      const box = modalState.box;
-
-      // Oranı hesapla
-      const boxRatio = box.width / box.height;
-      if (modalState.ratio !== 'free') {
-        bulkState.settings.ratio = modalState.ratio;
-        DOM.ratioOptions.querySelectorAll('.btn-pill').forEach(b => {
-          b.classList.toggle('active', b.dataset.ratio === modalState.ratio);
-        });
-      } else {
-        bulkState.settings.ratio = 'custom';
-        bulkState.settings.customW = Math.round(box.width);
-        bulkState.settings.customH = Math.round(box.height);
-        DOM.customRatioW.value = bulkState.settings.customW;
-        DOM.customRatioH.value = bulkState.settings.customH;
-        DOM.customRatioRow.classList.remove('hidden');
-        DOM.ratioOptions.querySelectorAll('.btn-pill').forEach(b => {
-          b.classList.toggle('active', b.dataset.ratio === 'custom');
-        });
-        DOM.ratioHint.textContent = `Özel (${bulkState.settings.customW}:${bulkState.settings.customH})`;
-      }
-
-      // Konum yüzdelerini hesapla
-      const leewayX = Math.max(1, imgW - box.width);
-      const leewayY = Math.max(1, imgH - box.height);
-      const posX = Math.round((box.x / leewayX) * 100);
-      const posY = Math.round((box.y / leewayY) * 100);
-
-      bulkState.settings.posX = Math.max(0, Math.min(100, posX));
-      bulkState.settings.posY = Math.max(0, Math.min(100, posY));
-      DOM.sliderPosX.value = bulkState.settings.posX;
-      DOM.sliderPosY.value = bulkState.settings.posY;
-      DOM.valPosX.textContent = `${bulkState.settings.posX}%`;
-      DOM.valPosY.textContent = `${bulkState.settings.posY}%`;
-      DOM.posHint.textContent = `X: ${bulkState.settings.posX}% / Y: ${bulkState.settings.posY}%`;
-
-      // Bireysel özel kırpmaları genel ayara çek
-      bulkState.images.forEach(i => i.customCrop = null);
-
-      closeManualCropModal();
-      bulkRenderAllCards();
-      showToast('El ile belirlenen kırpma tüm fotoğraflara uygulandı!', 'success');
-    });
-
-    setupModalOverlayInteractions();
-  }
-
-  function openManualCropModal(imgData) {
-    modalState.targetImg = imgData;
-    modalState.isOpen = true;
-
-    DOM.mcModalTitle.textContent = `El ile Kırp — ${imgData.name}`;
-    DOM.modalImg.src = imgData.objectUrl;
-
-    DOM.manualCropModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    DOM.modalImg.onload = () => {
-      // Eğer özel kırpması varsa onu yükle, yoksa mevcut hesaplanan kırpmayı getir
-      if (imgData.customCrop) {
-        modalState.box = { ...imgData.customCrop };
-      } else {
-        const initial = calculateBulkCrop(imgData.originalW, imgData.originalH, bulkState.settings);
-        modalState.box = { x: initial.sx, y: initial.sy, width: initial.sWidth, height: initial.sHeight };
-      }
-      modalRenderBox();
-    };
-  }
-
-  function closeManualCropModal() {
-    modalState.isOpen = false;
-    modalState.targetImg = null;
-    DOM.manualCropModal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  function applyRatioToModalBox(ratioStr) {
-    if (!modalState.targetImg) return;
-    const parts = ratioStr.split(':');
-    if (parts.length !== 2) return;
-    const targetR = parseFloat(parts[0]) / parseFloat(parts[1]);
-
-    const imgW = modalState.targetImg.originalW;
-    const imgH = modalState.targetImg.originalH;
-
-    let newW = modalState.box.width;
-    let newH = Math.round(newW / targetR);
-
-    if (newH > imgH) {
-      newH = imgH;
-      newW = Math.round(newH * targetR);
-    }
-    if (newW > imgW) {
-      newW = imgW;
-      newH = Math.round(newW / targetR);
-    }
-
-    modalState.box.width = newW;
-    modalState.box.height = newH;
-    modalState.box.x = Math.max(0, Math.min(imgW - newW, modalState.box.x));
-    modalState.box.y = Math.max(0, Math.min(imgH - newH, modalState.box.y));
-
-    modalRenderBox();
-  }
-
-  function modalRenderBox() {
-    if (!modalState.targetImg) return;
-    const imgW = modalState.targetImg.originalW;
-    const imgH = modalState.targetImg.originalH;
-    const box = modalState.box;
-
-    if (!modalBoxEl) {
-      modalBoxEl = document.createElement('div');
-      modalBoxEl.className = 'modal-crop-box';
-      modalBoxEl.innerHTML = `
-        <div class="mc-box-label" id="modalBoxLabel">0 × 0</div>
-        <div class="mc-handle handle-nw" data-handle="nw"></div>
-        <div class="mc-handle handle-n" data-handle="n"></div>
-        <div class="mc-handle handle-ne" data-handle="ne"></div>
-        <div class="mc-handle handle-e" data-handle="e"></div>
-        <div class="mc-handle handle-se" data-handle="se"></div>
-        <div class="mc-handle handle-s" data-handle="s"></div>
-        <div class="mc-handle handle-sw" data-handle="sw"></div>
-        <div class="mc-handle handle-w" data-handle="w"></div>
-      `;
-      DOM.modalOverlay.appendChild(modalBoxEl);
-    }
-
-    modalBoxEl.style.left = `${(box.x / imgW) * 100}%`;
-    modalBoxEl.style.top = `${(box.y / imgH) * 100}%`;
-    modalBoxEl.style.width = `${(box.width / imgW) * 100}%`;
-    modalBoxEl.style.height = `${(box.height / imgH) * 100}%`;
-
-    const label = modalBoxEl.querySelector('#modalBoxLabel');
-    if (label) label.textContent = `${box.width} × ${box.height} px`;
-
-    DOM.modalCoordBadge.textContent = `W: ${box.width} px × H: ${box.height} px (X: ${box.x}, Y: ${box.y})`;
-  }
-
-  function setupModalOverlayInteractions() {
-    const overlay = DOM.modalOverlay;
-
-    function modalClientToNatural(clientX, clientY) {
-      const rect = overlay.getBoundingClientRect();
-      const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-      const naturalX = Math.round(normX * modalState.targetImg.originalW);
-      const naturalY = Math.round(normY * modalState.targetImg.originalH);
-      return { naturalX, naturalY };
-    }
-
-    overlay.addEventListener('pointerdown', (e) => {
-      if (!modalState.targetImg || e.button !== 0) return;
-      const { naturalX, naturalY } = modalClientToNatural(e.clientX, e.clientY);
-
-      if (e.target.classList.contains('mc-handle')) {
-        modalState.interaction = {
-          mode: 'resizing',
-          pointerId: e.pointerId,
-          startNatural: { x: naturalX, y: naturalY },
-          startBox: { ...modalState.box },
-          handle: e.target.dataset.handle
-        };
-        overlay.setPointerCapture(e.pointerId);
-        e.stopPropagation();
-        return;
-      }
-
-      if (e.target.closest('.modal-crop-box')) {
-        modalState.interaction = {
-          mode: 'moving',
-          pointerId: e.pointerId,
-          startNatural: { x: naturalX, y: naturalY },
-          startBox: { ...modalState.box }
-        };
-        overlay.setPointerCapture(e.pointerId);
-        e.stopPropagation();
-        return;
-      }
-
-      // Yeni alan çiz
-      modalState.interaction = {
-        mode: 'drawing',
-        pointerId: e.pointerId,
-        startNatural: { x: naturalX, y: naturalY },
-        startBox: null
-      };
-      overlay.setPointerCapture(e.pointerId);
-    });
-
-    overlay.addEventListener('pointermove', (e) => {
-      const inter = modalState.interaction;
-      if (!inter.mode || !modalState.targetImg) return;
-      const { naturalX, naturalY } = modalClientToNatural(e.clientX, e.clientY);
-      const imgW = modalState.targetImg.originalW;
-      const imgH = modalState.targetImg.originalH;
-
-      if (inter.mode === 'drawing') {
-        const minX = Math.min(inter.startNatural.x, naturalX);
-        const minY = Math.min(inter.startNatural.y, naturalY);
-        const w = Math.max(10, Math.abs(naturalX - inter.startNatural.x));
-        const h = Math.max(10, Math.abs(naturalY - inter.startNatural.y));
-        modalState.box = { x: minX, y: minY, width: w, height: h };
-        modalRenderBox();
-      } else if (inter.mode === 'moving') {
-        const dx = naturalX - inter.startNatural.x;
-        const dy = naturalY - inter.startNatural.y;
-        const maxX = imgW - inter.startBox.width;
-        const maxY = imgH - inter.startBox.height;
-        modalState.box.x = Math.max(0, Math.min(maxX, inter.startBox.x + dx));
-        modalState.box.y = Math.max(0, Math.min(maxY, inter.startBox.y + dy));
-        modalRenderBox();
-      } else if (inter.mode === 'resizing') {
-        mcApplyResize(modalState.box, inter.startBox, inter.handle, naturalX, naturalY);
-        modalRenderBox();
-      }
-    });
-
-    const endModalInteraction = (e) => {
-      if (modalState.interaction.mode) {
-        try { overlay.releasePointerCapture(e.pointerId); } catch (err) {}
-        modalState.interaction = { mode: null, pointerId: null, startNatural: { x: 0, y: 0 }, startBox: null, handle: null };
-      }
-    };
-
-    overlay.addEventListener('pointerup', endModalInteraction);
-    overlay.addEventListener('pointercancel', endModalInteraction);
-  }
-
-
-  // ==========================================================================
-  // ==========================================================================
-  // BÖLÜM 3: ÇOKLU SERBEST KIRPMA (MOD 2 MANTIĞI - MULTI-CROP STUDIO)
+  // ÇOKLU SERBEST KIRPMA (MULTI-CROP STUDIO)
   // ==========================================================================
   // ==========================================================================
 
@@ -1320,6 +278,8 @@
 
       multiState.cropBoxes = [];
       multiState.selectedId = null;
+      multiState.checkedIds.clear();
+      bgCache.clear();
       multiState.history = { stack: [], index: -1 };
       mcPushHistory();
 
@@ -1496,7 +456,8 @@
             width: w,
             height: h,
             color: BOX_COLORS[multiState.cropBoxes.length % BOX_COLORS.length],
-            customName: null
+            customName: null,
+            bg: null
           };
           multiState.cropBoxes.push(newBox);
           mcSelectBox(newBox.id);
@@ -1511,7 +472,9 @@
           if (box.x !== inter.startBox.x || box.y !== inter.startBox.y ||
               box.width !== inter.startBox.width || box.height !== inter.startBox.height) {
             mcPushHistory();
-            mcUpdateSidebarCard(box);
+            // Arka planı silinmiş alan taşındı/boyutlandı: yeni bölge için yeniden hesapla
+            if (box.bg) mcRenderAllBoxes();
+            else mcUpdateSidebarCard(box);
           }
         }
       }
@@ -1598,9 +561,17 @@
 
     multiState.cropBoxes.forEach((box, index) => {
       const boxEl = document.createElement('div');
-      boxEl.className = 'mc-crop-box' + (box.id === multiState.selectedId ? ' selected' : '');
+      boxEl.className = 'mc-crop-box' +
+        (box.id === multiState.selectedId ? ' selected' : '') +
+        (box.bg ? ' has-bg-removed' : '');
       boxEl.dataset.id = box.id;
       boxEl.style.borderColor = box.color || '#4f46e5';
+
+      // Arka planı silinmiş alanlarda sonucu doğrudan tuval üzerinde göster
+      if (box.bg) {
+        const preview = mcCreateBgPreview(box);
+        if (preview) boxEl.appendChild(preview);
+      }
 
       const imgW = multiState.image.naturalWidth;
       const imgH = multiState.image.naturalHeight;
@@ -1666,7 +637,7 @@
     allCards.forEach(c => {
       if (c.dataset.id === id) {
         c.classList.add('active');
-        c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        mcScrollCardIntoList(c);
       } else {
         c.classList.remove('active');
       }
@@ -1677,14 +648,32 @@
     DOM.mcDownloadSelectedBtn.disabled = !box;
   }
 
+  /**
+   * Kartı yalnızca liste kutusunun içinde görünür yapar. scrollIntoView tüm
+   * sayfayı da kaydırdığından, çizim/sürükleme sırasında imlecin altındaki
+   * görselin kaymasına yol açıyordu.
+   */
+  function mcScrollCardIntoList(card) {
+    const list = DOM.mcAreaList;
+    const listRect = list.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    if (cardRect.top < listRect.top) {
+      list.scrollTop -= listRect.top - cardRect.top;
+    } else if (cardRect.bottom > listRect.bottom) {
+      list.scrollTop += cardRect.bottom - listRect.bottom;
+    }
+  }
+
   function mcUpdateSelectedBadge(box) {
     if (!box) {
       DOM.mcSelectedBadge.textContent = 'Alan Seçilmedi';
+      DOM.mcSelectedBadge.title = '';
       return;
     }
     const idx = multiState.cropBoxes.findIndex(b => b.id === box.id);
     const title = box.customName || `Kırpma #${idx + 1}`;
-    DOM.mcSelectedBadge.textContent = `Seçili: ${title} (${box.width} × ${box.height} px | X: ${box.x}, Y: ${box.y})`;
+    DOM.mcSelectedBadge.textContent = `${title} · ${box.width} × ${box.height} px`;
+    DOM.mcSelectedBadge.title = `Seçili: ${title} (${box.width} × ${box.height} px | X: ${box.x}, Y: ${box.y})`;
   }
 
   // ==========================================================================
@@ -1704,13 +693,18 @@
 
       multiState.cropBoxes.forEach((box, index) => {
         const card = document.createElement('div');
-        card.className = 'mc-area-card' + (box.id === multiState.selectedId ? ' active' : '');
+        const isChecked = multiState.checkedIds.has(box.id);
+        card.className = 'mc-area-card' +
+          (box.id === multiState.selectedId ? ' active' : '') +
+          (isChecked ? ' checked' : '');
         card.dataset.id = box.id;
 
         const displayName = box.customName || `Kırpma #${index + 1}`;
 
         card.innerHTML = `
-          <div class="mc-area-thumb-wrap">
+          <input type="checkbox" class="mc-area-check" ${isChecked ? 'checked' : ''}
+            aria-label="${escapeHtml(displayName)} alanını işaretle" title="Arka plan silme için işaretle">
+          <div class="mc-area-thumb-wrap${box.bg ? ' has-bg-removed' : ''}">
             <canvas class="mc-area-thumb" width="54" height="54"></canvas>
           </div>
           <div class="mc-area-info">
@@ -1720,6 +714,7 @@
             </div>
             <div class="mc-area-dims">${box.width} × ${box.height} px</div>
             <div class="mc-area-coords">Konum: X:${box.x}, Y:${box.y}</div>
+            ${box.bg ? '<span class="mc-area-bg-badge">Arka plan silindi</span>' : ''}
           </div>
           <div class="mc-area-actions">
             <button type="button" class="btn-area-action btn-dl" title="Bu alanı indir">
@@ -1730,6 +725,14 @@
             </button>
           </div>
         `;
+
+        // Onay kutusu (arka plan silme için işaretleme)
+        card.querySelector('.mc-area-check').addEventListener('change', (e) => {
+          if (e.target.checked) multiState.checkedIds.add(box.id);
+          else multiState.checkedIds.delete(box.id);
+          card.classList.toggle('checked', e.target.checked);
+          mcUpdateCheckUI();
+        });
 
         // Tıklayınca alana odaklan
         card.addEventListener('click', (e) => {
@@ -1789,11 +792,16 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     try {
-      ctx.drawImage(
-        multiState.image.img,
-        box.x, box.y, box.width, box.height,
-        0, 0, canvas.width, canvas.height
-      );
+      const bgCanvas = mcGetBgCanvas(box);
+      if (bgCanvas) {
+        ctx.drawImage(bgCanvas, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.drawImage(
+          multiState.image.img,
+          box.x, box.y, box.width, box.height,
+          0, 0, canvas.width, canvas.height
+        );
+      }
     } catch (e) {}
   }
 
@@ -1818,6 +826,7 @@
     DOM.mcClearAllBtn.disabled = count === 0;
     DOM.mcUndoBtn.disabled = multiState.history.index <= 0;
     DOM.mcRedoBtn.disabled = multiState.history.index >= multiState.history.stack.length - 1;
+    mcUpdateCheckUI();
   }
 
   // ==========================================================================
@@ -1885,7 +894,8 @@
       width: box.width,
       height: box.height,
       color: BOX_COLORS[multiState.cropBoxes.length % BOX_COLORS.length],
-      customName: box.customName ? `${box.customName}_kopya` : null
+      customName: box.customName ? `${box.customName}_kopya` : null,
+      bg: box.bg ? { ...box.bg } : null
     };
 
     multiState.cropBoxes.push(newBox);
@@ -1906,6 +916,8 @@
     if (idx === -1) return;
 
     multiState.cropBoxes.splice(idx, 1);
+    multiState.checkedIds.delete(id);
+    bgCache.delete(id);
     if (multiState.selectedId === id) {
       multiState.selectedId = null;
     }
@@ -1949,11 +961,18 @@
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(
-          multiState.image.img,
-          box.x, box.y, box.width, box.height,
-          0, 0, box.width, box.height
-        );
+
+        const bgCanvas = mcGetBgCanvas(box);
+        if (bgCanvas) {
+          // Arka planı silinmiş sürüm (PNG/WebP'de şeffaf, JPEG'de beyaz zemin)
+          ctx.drawImage(bgCanvas, 0, 0);
+        } else {
+          ctx.drawImage(
+            multiState.image.img,
+            box.x, box.y, box.width, box.height,
+            0, 0, box.width, box.height
+          );
+        }
 
         const quality = (multiState.settings.quality || 90) / 100;
         canvas.toBlob((blob) => {
@@ -2053,6 +1072,278 @@
       DOM.mcBtnZipText.textContent = 'Tümünü ZIP Olarak İndir';
       setTimeout(() => DOM.mcProgressCard.classList.add('hidden'), 3000);
     }
+  }
+
+
+  // ==========================================================================
+  // ==========================================================================
+  // ARKA PLAN SİLME (RENK TABANLI, ÇEVRİMDIŞI)
+  // ==========================================================================
+  // ==========================================================================
+  //
+  // Yöntem: Alanın kenar piksellerindeki baskın (medyan) renk arka plan kabul
+  // edilir. Kenarlardan başlayan taşma dolgusu (flood fill) ile bu renge
+  // tolerans dahilinde benzeyen ve kenara bağlı tüm pikseller şeffaf yapılır.
+  // "İç boşluklar" seçeneği açıksa, kenara bağlı olmasa da benzer renkteki
+  // tüm pikseller silinir. Nesne kenarlarında 1 piksellik yumuşatma uygulanır.
+  //
+  // Sonuç, kutunun konumu/boyutu/ayarı değişmedikçe önbellekte tutulur.
+  // Kutu taşınır veya boyutlandırılırsa yeni bölge için yeniden hesaplanır.
+
+  const bgCache = new Map(); // boxId -> { key, canvas }
+
+  function setupBackgroundRemoval() {
+    DOM.mcBgTolerance.addEventListener('input', (e) => {
+      multiState.settings.bgTolerance = parseInt(e.target.value, 10);
+      DOM.mcBgToleranceVal.textContent = multiState.settings.bgTolerance;
+    });
+
+    DOM.mcBgHoles.addEventListener('change', (e) => {
+      multiState.settings.bgHoles = e.target.checked;
+    });
+
+    DOM.mcCheckAll.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        multiState.cropBoxes.forEach(b => multiState.checkedIds.add(b.id));
+      } else {
+        multiState.checkedIds.clear();
+      }
+      mcRenderSidebarList();
+    });
+
+    DOM.mcRemoveBgBtn.addEventListener('click', mcRemoveBgFromChecked);
+    DOM.mcRestoreBgBtn.addEventListener('click', mcRestoreBgOfChecked);
+  }
+
+  function mcGetCheckedBoxes() {
+    return multiState.cropBoxes.filter(b => multiState.checkedIds.has(b.id));
+  }
+
+  function mcUpdateCheckUI() {
+    // Artık var olmayan (silinmiş / geri alınmış) alanları işaret listesinden çıkar
+    const existing = new Set(multiState.cropBoxes.map(b => b.id));
+    multiState.checkedIds.forEach(id => {
+      if (!existing.has(id)) multiState.checkedIds.delete(id);
+    });
+
+    const total = multiState.cropBoxes.length;
+    const checked = multiState.checkedIds.size;
+
+    DOM.mcCheckAll.disabled = total === 0;
+    DOM.mcCheckAll.checked = total > 0 && checked === total;
+    DOM.mcCheckAll.indeterminate = checked > 0 && checked < total;
+    DOM.mcCheckedCount.textContent = `${checked} seçili`;
+    DOM.mcRemoveBgBtn.disabled = checked === 0 || appState.isProcessing;
+    DOM.mcRestoreBgBtn.disabled = appState.isProcessing || !mcGetCheckedBoxes().some(b => b.bg);
+  }
+
+  async function mcRemoveBgFromChecked() {
+    const boxes = mcGetCheckedBoxes();
+    if (boxes.length === 0 || appState.isProcessing || !multiState.image) return;
+
+    appState.isProcessing = true;
+    mcUpdateCheckUI();
+
+    const bgSettings = {
+      tolerance: multiState.settings.bgTolerance,
+      holes: multiState.settings.bgHoles
+    };
+
+    try {
+      for (const box of boxes) {
+        box.bg = { ...bgSettings };
+        await yieldToMain(); // Büyük alanlarda arayüzün donmaması için
+        mcGetBgCanvas(box);  // Sonucu hesapla ve önbelleğe al
+      }
+
+      mcPushHistory();
+      mcRenderAllBoxes();
+      showToast(`${boxes.length} alanın arka planı silindi.`, 'success');
+
+      if (multiState.settings.format === 'jpeg') {
+        showToast('JPEG şeffaflığı desteklemez; silinen arka plan beyaz olur. Şeffaf çıktı için PNG veya WebP seçin.', 'warning');
+      }
+    } catch (err) {
+      showToast('Arka plan silinirken hata oluştu.', 'error');
+    } finally {
+      appState.isProcessing = false;
+      mcUpdateCheckUI();
+    }
+  }
+
+  function mcRestoreBgOfChecked() {
+    const boxes = mcGetCheckedBoxes().filter(b => b.bg);
+    if (boxes.length === 0 || appState.isProcessing) return;
+
+    boxes.forEach(b => {
+      b.bg = null;
+      bgCache.delete(b.id);
+    });
+
+    mcPushHistory();
+    mcRenderAllBoxes();
+    showToast(`${boxes.length} alanın orijinal arka planı geri getirildi.`, 'info');
+  }
+
+  /** Kutunun orijinal piksellerini içeren canvas'ı döndürür. */
+  function mcGetSourceCanvas(box) {
+    const canvas = document.createElement('canvas');
+    canvas.width = box.width;
+    canvas.height = box.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(
+      multiState.image.img,
+      box.x, box.y, box.width, box.height,
+      0, 0, box.width, box.height
+    );
+    return canvas;
+  }
+
+  /** Arka planı silinmiş canvas'ı döndürür (kutu bg ayarı yoksa null). */
+  function mcGetBgCanvas(box) {
+    if (!box.bg || !multiState.image) return null;
+
+    const key = `${box.x},${box.y},${box.width},${box.height},${box.bg.tolerance},${box.bg.holes}`;
+    const cached = bgCache.get(box.id);
+    if (cached && cached.key === key) return cached.canvas;
+
+    const canvas = mcGetSourceCanvas(box);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    removeBackgroundByColor(imageData, box.bg.tolerance, box.bg.holes);
+    ctx.putImageData(imageData, 0, 0);
+
+    bgCache.set(box.id, { key, canvas });
+    return canvas;
+  }
+
+  /**
+   * Renk tabanlı arka plan silme (ImageData üzerinde yerinde çalışır).
+   * @param {ImageData} imageData
+   * @param {number} tolerance 1–100 arası kullanıcı toleransı
+   * @param {boolean} removeHoles true ise kenara bağlı olmayan benzer renkler de silinir
+   */
+  function removeBackgroundByColor(imageData, tolerance, removeHoles) {
+    const { data, width: w, height: h } = imageData;
+    const n = w * h;
+    if (n === 0) return;
+
+    const bg = estimateBorderColor(data, w, h);
+    const threshold = tolerance * 2.2;           // RGB uzaklığı (0 – ~441)
+    const feather = Math.max(8, threshold * 0.5); // Kenar yumuşatma aralığı
+
+    // Her pikselin arka plan rengine uzaklığı
+    const dist = new Float32Array(n);
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      const dr = data[p] - bg[0];
+      const dg = data[p + 1] - bg[1];
+      const db = data[p + 2] - bg[2];
+      dist[i] = Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+
+    // mask[i] = 1 → arka plan
+    const mask = new Uint8Array(n);
+
+    if (removeHoles) {
+      for (let i = 0; i < n; i++) {
+        if (dist[i] <= threshold) mask[i] = 1;
+      }
+    } else {
+      // Kenarlardan başlayan taşma dolgusu (her piksel en fazla bir kez yığına girer)
+      const stack = new Int32Array(n);
+      let sp = 0;
+      const push = (i) => {
+        if (mask[i] === 0 && dist[i] <= threshold) {
+          mask[i] = 1;
+          stack[sp++] = i;
+        }
+      };
+
+      for (let x = 0; x < w; x++) {
+        push(x);
+        push((h - 1) * w + x);
+      }
+      for (let y = 0; y < h; y++) {
+        push(y * w);
+        push(y * w + w - 1);
+      }
+
+      while (sp > 0) {
+        const i = stack[--sp];
+        const x = i % w;
+        if (x > 0) push(i - 1);
+        if (x < w - 1) push(i + 1);
+        if (i >= w) push(i - w);
+        if (i < n - w) push(i + w);
+      }
+    }
+
+    // Şeffaflığı uygula; arka plana komşu nesne piksellerini yumuşat
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      if (mask[i]) {
+        data[p + 3] = 0;
+        continue;
+      }
+      const x = i % w;
+      const touchesBg =
+        (x > 0 && mask[i - 1]) ||
+        (x < w - 1 && mask[i + 1]) ||
+        (i >= w && mask[i - w]) ||
+        (i < n - w && mask[i + w]);
+
+      if (touchesBg) {
+        const a = Math.min(1, (dist[i] - threshold) / feather);
+        data[p + 3] = Math.round(data[p + 3] * a);
+      }
+    }
+  }
+
+  /** Kenar piksellerinin kanal bazında medyan rengini döndürür: [r, g, b] */
+  function estimateBorderColor(data, w, h) {
+    const hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)];
+    let count = 0;
+
+    const add = (x, y) => {
+      const p = (y * w + x) * 4;
+      hist[0][data[p]]++;
+      hist[1][data[p + 1]]++;
+      hist[2][data[p + 2]]++;
+      count++;
+    };
+
+    for (let x = 0; x < w; x++) {
+      add(x, 0);
+      if (h > 1) add(x, h - 1);
+    }
+    for (let y = 1; y < h - 1; y++) {
+      add(0, y);
+      if (w > 1) add(w - 1, y);
+    }
+
+    const half = count / 2;
+    return hist.map(channel => {
+      let acc = 0;
+      for (let v = 0; v < 256; v++) {
+        acc += channel[v];
+        if (acc >= half) return v;
+      }
+      return 255;
+    });
+  }
+
+  /** Kutu içinde, tuval üzerinde arka planı silinmiş önizlemeyi oluşturur. */
+  function mcCreateBgPreview(box) {
+    const source = mcGetBgCanvas(box);
+    if (!source) return null;
+
+    const maxDim = 600; // Önizleme için yeterli; bellek tasarrufu
+    const scale = Math.min(1, maxDim / Math.max(box.width, box.height));
+    const preview = document.createElement('canvas');
+    preview.className = 'mc-box-bg-preview';
+    preview.width = Math.max(1, Math.round(box.width * scale));
+    preview.height = Math.max(1, Math.round(box.height * scale));
+    preview.getContext('2d').drawImage(source, 0, 0, preview.width, preview.height);
+    return preview;
   }
 
 
@@ -2231,27 +1522,6 @@
     return new Promise(resolve => setTimeout(resolve, 0));
   }
 
-  function getOutputMimeType(originalType, chosenFormat) {
-    if (chosenFormat === 'jpeg') return 'image/jpeg';
-    if (chosenFormat === 'png') return 'image/png';
-    if (chosenFormat === 'webp') return 'image/webp';
-    if (originalType === 'image/png') return 'image/png';
-    if (originalType === 'image/webp') return 'image/webp';
-    return 'image/jpeg';
-  }
-
-  function getFormatLabel(mimeType) {
-    switch (mimeType) {
-      case 'image/jpeg': return 'JPEG';
-      case 'image/png': return 'PNG';
-      case 'image/webp': return 'WebP';
-      default: return 'JPG';
-    }
-  }
-
-  function getEffectiveFormatBadge(originalType, chosenFormat) {
-    return getFormatLabel(getOutputMimeType(originalType, chosenFormat));
-  }
 
   function getUniqueFilename(name, set) {
     if (!set.has(name)) return name;
@@ -2273,13 +1543,6 @@
     return valid.some(ext => lower.endsWith(ext));
   }
 
-  function formatFileSize(bytes) {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
 
   function pad2(num) {
     return num.toString().padStart(2, '0');

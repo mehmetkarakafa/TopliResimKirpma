@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Toplu Kırp — Toplu & Çoklu Fotoğraf Kırpma Aracı</title>
+  <title>Çoklu Kırp — Tek Fotoğraftan Çoklu Serbest Kırpma</title>
   <meta name="description"
-    content="Birden fazla fotoğrafı aynı anda kırpın veya tek bir fotoğraftan sınırsız sayıda serbest alan kırparak ZIP olarak indirin. Tamamen tarayıcınızda çalışan, güvenli ve ücretsiz görsel kırpma stüdyosu.">
+    content="Tek bir fotoğraftan sınırsız sayıda serbest alan kırpın, istediğiniz alanların arka planını silin ve ZIP olarak indirin. Tamamen tarayıcınızda çalışan, güvenli ve ücretsiz görsel kırpma stüdyosu.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -29,9 +29,8 @@
           </svg>
         </div>
         <div>
-          <h1 class="logo-title">Toplu Kırp</h1>
-          <p class="logo-subtitle">Birden fazla fotoğrafı aynı anda kırp veya tek fotoğraftan çoklu serbest alan seç.
-          </p>
+          <h1 class="logo-title">Çoklu Kırp</h1>
+          <p class="logo-subtitle">Tek fotoğraftan çoklu serbest alan seç, arka planını sil ve indir.</p>
         </div>
       </div>
       <div class="header-badges">
@@ -53,316 +52,11 @@
     </div>
   </header>
 
-  <!-- Mod Seçim Gezinme Çubuğu (Tabs) -->
-  <nav class="mode-navigation" aria-label="Çalışma Modu Seçimi">
-    <div class="container mode-nav-container">
-      <button type="button" class="mode-tab active" id="tabBulkCrop" data-mode="bulk">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-        <span>Toplu Fotoğraf Kırpma</span>
-      </button>
-
-      <button type="button" class="mode-tab" id="tabMultiCrop" data-mode="multi">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
-          <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
-        </svg>
-        <span>Çoklu Serbest Kırpma</span>
-        <span class="tab-badge">Yeni</span>
-      </button>
-    </div>
-  </nav>
-
   <main class="container main-content">
     <!-- Notice Banner for Offline / GIF warnings if needed -->
     <div id="globalNotice" class="alert-banner hidden" role="alert"></div>
 
-    <!-- ====================================================================
-         1. MOD: TOPLU FOTOĞRAF KIRPMA
-         ==================================================================== -->
-    <div id="bulkCropView">
-      <!-- Upload Dropzone Section -->
-      <section class="upload-section">
-        <div id="dropzone" class="dropzone" tabindex="0" role="button"
-          aria-label="Görsel yüklemek için tıklayın veya dosyaları sürükleyip bırakın">
-          <input type="file" id="fileInput" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp,.svg"
-            class="visually-hidden">
-
-          <div class="dropzone-icon-wrap">
-            <svg class="dropzone-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-          </div>
-
-          <h2 class="dropzone-title">Fotoğrafları buraya sürükleyip bırakın</h2>
-          <p class="dropzone-desc">veya bilgisayarınızdan dosya seçmek için tıklayın</p>
-
-          <button type="button" class="btn btn-primary dropzone-btn" id="browseBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            Fotoğrafları Seç
-          </button>
-
-          <div class="dropzone-footer">
-            <span>Desteklenen Formatlar: JPG, PNG, WebP, AVIF, GIF, BMP</span>
-            <span class="separator">•</span>
-            <span>Dosyalarınız hiçbir sunucuya yüklenmez, doğrudan tarayıcınızda işlenir.</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Settings Section -->
-      <section class="settings-section card">
-        <div class="card-header">
-          <div class="card-header-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="4" y1="21" x2="4" y2="14"></line>
-              <line x1="4" y1="10" x2="4" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12" y2="3"></line>
-              <line x1="20" y1="21" x2="20" y2="16"></line>
-              <line x1="20" y1="12" x2="20" y2="3"></line>
-              <line x1="1" y1="14" x2="7" y2="14"></line>
-              <line x1="9" y1="8" x2="15" y2="8"></line>
-              <line x1="17" y1="16" x2="23" y2="16"></line>
-            </svg>
-            <h2>Ortak Kırpma ve Çıktı Ayarları</h2>
-          </div>
-          <span class="card-header-badge">Tüm fotoğraflara anında uygulanır</span>
-        </div>
-
-        <div class="settings-grid">
-          <!-- 1. Aspect Ratio -->
-          <div class="setting-group ratio-group">
-            <label class="setting-label">
-              <span>En-Boy Oranı</span>
-              <span class="setting-hint" id="ratioHint">Kare (1:1)</span>
-            </label>
-            <div class="ratio-options" id="ratioOptions">
-              <button type="button" class="btn-pill" data-ratio="free">Serbest</button>
-              <button type="button" class="btn-pill active" data-ratio="1:1">1:1 — Kare</button>
-              <button type="button" class="btn-pill" data-ratio="4:3">4:3</button>
-              <button type="button" class="btn-pill" data-ratio="3:2">3:2</button>
-              <button type="button" class="btn-pill" data-ratio="16:9">16:9</button>
-              <button type="button" class="btn-pill" data-ratio="9:16">9:16 — Dikey</button>
-              <button type="button" class="btn-pill" data-ratio="3:4">3:4</button>
-              <button type="button" class="btn-pill" data-ratio="2:3">2:3</button>
-              <button type="button" class="btn-pill" data-ratio="custom">Özel Oran</button>
-            </div>
-
-            <!-- Custom Ratio Inputs -->
-            <div class="custom-ratio-row hidden" id="customRatioRow">
-              <div class="custom-input-box">
-                <label for="customRatioW">Genişlik Oranı</label>
-                <input type="number" id="customRatioW" min="1" max="100" value="1" step="1">
-              </div>
-              <span class="ratio-colon">:</span>
-              <div class="custom-input-box">
-                <label for="customRatioH">Yükseklik Oranı</label>
-                <input type="number" id="customRatioH" min="1" max="100" value="1" step="1">
-              </div>
-            </div>
-
-            <!-- Görsel Üzerinde El ile Seçme Butonu -->
-            <div class="manual-crop-cta" style="margin-top: 0.65rem;">
-              <button type="button" class="btn btn-secondary btn-sm" id="btnOpenManualCropMaster" style="width: 100%;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
-                  <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
-                </svg>
-                Görsel Üzerinde El ile Kırp / Seç
-              </button>
-            </div>
-          </div>
-
-          <!-- 2. Position Controls -->
-          <div class="setting-group position-group">
-            <label class="setting-label">
-              <span>Kırpma Konumu ve Hizalama</span>
-              <span class="setting-hint" id="posHint">Merkez (50% / 50%)</span>
-            </label>
-            <div class="position-presets" id="posPresets">
-              <button type="button" class="btn-pos active" data-pos="center">Merkez</button>
-              <button type="button" class="btn-pos" data-pos="top">Üst</button>
-              <button type="button" class="btn-pos" data-pos="bottom">Alt</button>
-              <button type="button" class="btn-pos" data-pos="left">Sol</button>
-              <button type="button" class="btn-pos" data-pos="right">Sağ</button>
-            </div>
-
-            <!-- Position Sliders -->
-            <div class="sliders-container">
-              <div class="slider-row">
-                <div class="slider-meta">
-                  <span class="slider-title">Yatay Konum (X)</span>
-                  <span class="slider-val" id="valPosX">50%</span>
-                </div>
-                <input type="range" id="sliderPosX" min="0" max="100" value="50" class="range-slider">
-              </div>
-
-              <div class="slider-row">
-                <div class="slider-meta">
-                  <span class="slider-title">Dikey Konum (Y)</span>
-                  <span class="slider-val" id="valPosY">50%</span>
-                </div>
-                <input type="range" id="sliderPosY" min="0" max="100" value="50" class="range-slider">
-              </div>
-
-              <div class="slider-row">
-                <div class="slider-meta">
-                  <span class="slider-title">Kırpma Ölçeği / Kapsama</span>
-                  <span class="slider-val" id="valScale">100%</span>
-                </div>
-                <input type="range" id="sliderScale" min="30" max="100" value="100" class="range-slider">
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. Output Format & Quality -->
-          <div class="setting-group format-group">
-            <label class="setting-label">
-              <span>Çıktı Formatı ve Kalite</span>
-            </label>
-            <div class="format-controls">
-              <div class="select-wrapper">
-                <label for="formatSelect" class="sub-label">Format</label>
-                <select id="formatSelect" class="form-select">
-                  <option value="original" selected>Orijinal Formatı Koru</option>
-                  <option value="jpeg">JPEG (.jpg)</option>
-                  <option value="png">PNG (.png) — Şeffaflık Destekli</option>
-                  <option value="webp">WebP (.webp) — Modern & Küçük Boyut</option>
-                </select>
-              </div>
-
-              <!-- Dosya Adlandırma Şablonu -->
-              <div class="select-wrapper">
-                <label for="bulkNamePatternSelect" class="sub-label">Dosya İsimlendirme</label>
-                <select id="bulkNamePatternSelect" class="form-select">
-                  <option value="original" selected>Orijinal İsim (manzara.jpg)</option>
-                  <option value="suffix">Orijinal + Son Ek (manzara_kirpilmis.jpg)</option>
-                  <option value="custom">Özel İsim + Sıra No (gorsel_01.jpg)</option>
-                </select>
-                <input type="text" id="bulkCustomNameInput" class="form-input hidden"
-                  placeholder="Örn: gorsel, urun, kirpilmis" value="kirpilmis" style="margin-top: 0.35rem;">
-              </div>
-
-              <!-- Quality Slider (Visible for JPEG and WebP) -->
-              <div class="slider-row quality-row" id="qualityRow">
-                <div class="slider-meta">
-                  <span class="slider-title">Görsel Kalitesi</span>
-                  <span class="slider-val" id="valQuality">%90</span>
-                </div>
-                <input type="range" id="sliderQuality" min="10" max="100" value="90" class="range-slider">
-              </div>
-
-              <!-- Max Output Width (Optional) -->
-              <div class="input-wrapper max-width-wrapper">
-                <label for="maxWidthInput" class="sub-label">
-                  Maksimum Genişlik (px)
-                  <span class="sub-label-hint">(İsteğe bağlı, 0 = Orijinal)</span>
-                </label>
-                <input type="number" id="maxWidthInput" min="0" max="10000" step="10" placeholder="0 (Otomatik)"
-                  class="form-input">
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Toolbar & Summary Area -->
-      <section class="action-bar-section">
-        <div class="action-bar card">
-          <div class="action-summary">
-            <div class="summary-count">
-              <span class="count-badge" id="imageCountBadge">0</span>
-              <span class="count-label" id="imageCountText">Görsel Yüklendi</span>
-            </div>
-            <p class="summary-subtext" id="summarySubtext">Kırpma işlemine başlamak için görsel ekleyin.</p>
-          </div>
-
-          <div class="action-buttons">
-            <button type="button" class="btn btn-secondary" id="clearAllBtn" disabled>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-              </svg>
-              Tümünü Temizle
-            </button>
-
-            <button type="button" class="btn btn-primary btn-large" id="processZipBtn" disabled>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span id="btnProcessText">Tüm Görselleri Kırp ve ZIP İndir</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Processing Progress Card -->
-        <div class="progress-card card hidden" id="progressCard">
-          <div class="progress-info">
-            <div class="progress-text-group">
-              <span class="spinner" id="progressSpinner" aria-hidden="true"></span>
-              <span class="progress-status" id="progressStatus">Fotoğraflar kırpılıyor...</span>
-            </div>
-            <span class="progress-percent" id="progressPercent">%0</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Images List & Gallery -->
-      <section class="gallery-section">
-        <div class="section-heading">
-          <h3 class="section-title">Yüklenen Görseller ve Önizleme</h3>
-          <span class="section-note" id="galleryNote">Ayarlar değiştirildiğinde tüm önizlemeler otomatik
-            güncellenir</span>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-state card" id="emptyState">
-          <div class="empty-icon-wrap">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-          </div>
-          <h4>Henüz görsel yüklenmedi</h4>
-          <p>Yukarıdaki yükleme alanına görsellerinizi sürükleyin veya "Fotoğrafları Seç" butonuna tıklayın.</p>
-        </div>
-
-        <!-- Images Grid Container -->
-        <div class="image-grid hidden" id="imageGrid"></div>
-      </section>
-    </div>
-
-    <!-- ====================================================================
-         2. MOD: ÇOKLU SERBEST KIRPMA (TEK FOTOĞRAF ÜZERİNDE)
-         ==================================================================== -->
-    <div id="multiCropView" class="hidden">
+    <div id="multiCropView">
       <!-- Kullanım Bilgilendirme Banner'ı -->
       <div class="mc-instruction-banner">
         <div class="mc-instruction-icon">
@@ -544,6 +238,46 @@
               <span class="badge badge-info" id="mcAreaCountBadge">0 Alan</span>
             </div>
 
+            <!-- Arka Plan Silme Paneli (işaretli alanlara uygulanır) -->
+            <div class="mc-bg-panel">
+              <div class="mc-bg-select-row">
+                <label class="mc-check-label">
+                  <input type="checkbox" id="mcCheckAll" disabled>
+                  Tümünü seç
+                </label>
+                <span class="mc-checked-count" id="mcCheckedCount">0 seçili</span>
+              </div>
+
+              <div class="slider-row">
+                <div class="slider-meta">
+                  <span class="slider-title">Renk Toleransı</span>
+                  <span class="slider-val" id="mcBgToleranceVal">25</span>
+                </div>
+                <input type="range" id="mcBgTolerance" min="1" max="100" value="25" class="range-slider">
+              </div>
+
+              <label class="mc-check-label">
+                <input type="checkbox" id="mcBgHoles">
+                İç boşluklardaki aynı rengi de sil
+              </label>
+
+              <div class="mc-bg-actions">
+                <button type="button" class="btn btn-primary btn-sm" id="mcRemoveBgBtn" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 20H7L3 16a1.5 1.5 0 0 1 0-2.1L13.9 3a1.5 1.5 0 0 1 2.1 0L21 8a1.5 1.5 0 0 1 0 2.1L11 20"></path>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                  Seçililerin Arka Planını Sil
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="mcRestoreBgBtn" disabled
+                  title="İşaretli alanların orijinal arka planını geri getir">Geri Getir</button>
+              </div>
+
+              <p class="mc-bg-hint">Alanın kenarlarındaki baskın renk arka plan kabul edilir ve şeffaf yapılır. Düz /
+                tek renkli zeminlerde en iyi sonucu verir.</p>
+            </div>
+
             <!-- Boş Liste Durumu -->
             <div class="mc-sidebar-empty" id="mcSidebarEmpty">
               <div class="mc-empty-icon">
@@ -658,66 +392,13 @@
     </div>
   </main>
 
-  <!-- El ile Kırpma Düzenleme Modalı (Manual Crop Modal for Bulk Cropper) -->
-  <div id="manualCropModal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
-    aria-labelledby="mcModalTitle">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div>
-          <h3 class="modal-title" id="mcModalTitle">Görsel Üzerinde El ile Kırp</h3>
-          <p class="modal-subtitle" id="mcModalSubtitle">Kutuyu fareyle taşıyın, tutamaçlardan boyutlandırın veya
-            sıfırdan yeni bir alan çizin.</p>
-        </div>
-        <button type="button" class="btn-modal-close" id="mcModalCloseBtn" aria-label="Kapat">&times;</button>
-      </div>
-
-      <!-- Modal Toolbar -->
-      <div class="modal-toolbar">
-        <div class="modal-toolbar-ratios" id="modalRatioOptions">
-          <span class="toolbar-label">Oran:</span>
-          <button type="button" class="btn-pill-sm active" data-ratio="free">Serbest</button>
-          <button type="button" class="btn-pill-sm" data-ratio="1:1">1:1</button>
-          <button type="button" class="btn-pill-sm" data-ratio="4:3">4:3</button>
-          <button type="button" class="btn-pill-sm" data-ratio="16:9">16:9</button>
-          <button type="button" class="btn-pill-sm" data-ratio="9:16">9:16</button>
-        </div>
-        <div class="modal-coord-badge" id="modalCoordBadge">
-          0 × 0 px
-        </div>
-      </div>
-
-      <!-- Modal Canvas / Interactive Stage -->
-      <div class="modal-body" id="modalViewport">
-        <div class="modal-stage" id="modalStage">
-          <img id="modalImg" draggable="false" alt="El ile Kırpılacak Görsel">
-          <div id="modalOverlay" class="modal-overlay" tabindex="0">
-            <!-- Modal interactive crop box -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer Actions -->
-      <div class="modal-footer">
-        <div class="modal-footer-left">
-          <button type="button" class="btn btn-secondary btn-sm" id="modalResetBtn">Orijinal Alana Sıfırla</button>
-        </div>
-        <div class="modal-footer-right">
-          <button type="button" class="btn btn-secondary" id="modalCancelBtn">İptal</button>
-          <button type="button" class="btn btn-secondary" id="modalApplyAllBtn">Tüm Görsellere Uygula</button>
-          <button type="button" class="btn btn-primary" id="modalApplySingleBtn">Yalnızca Bu Görsele Uygula</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <!-- Footer -->
   <footer class="app-footer">
     <div class="container footer-content">
-      <p><strong>Toplu Kırp</strong> — Tamamen istemci taraflı çalışan modern toplu & çoklu görsel kırpma uygulaması.
-      </p>
+      <p><strong>Çoklu Kırp</strong> — Tamamen istemci taraflı çalışan modern çoklu görsel kırpma uygulaması.</p>
       <p class="footer-privacy">Fotoğraflarınız sunucuya gönderilmez, tüm işlemler bilgisayarınızın işlem gücü ile
         tarayıcınızda gerçekleştirilir.</p>
     </div>

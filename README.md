@@ -1,55 +1,47 @@
-# Toplu Kırp — Toplu & Çoklu Fotoğraf Kırpma Aracı
+# Çoklu Kırp — Tek Fotoğraftan Çoklu Serbest Kırpma
 
-Modern, sade, hızlı ve tamamen tarayıcı üzerinde (%100 istemci taraflı) çalışan kapsamlı görsel kırpma uygulaması.
+Modern, sade, hızlı ve tamamen tarayıcı üzerinde (%100 istemci taraflı) çalışan görsel kırpma uygulaması.
 
-Uygulama iki güçlü çalışma modu sunar:
-1. **Toplu Fotoğraf Kırpma:** Birden fazla fotoğrafı aynı anda yükleyin, ortak en-boy oranlarını ve konumlandırmayı seçin, tek tıkla toplu ZIP indirin.
-2. **Çoklu Serbest Kırpma (Yeni!):** Tek bir fotoğraf yükleyin, üzerine fareyle veya dokunarak istediğiniz sayıda serbest kırpma alanı çizin, taşıyın, boyutlandırın, çoğaltın ve tek tek veya ZIP olarak dışa aktarın.
+**Canlı sürüm:** https://mehmetkarakafa.github.io/TopliResimKirpma/
+
+© 2026 Mehmet Karakafa. Tüm hakları saklıdır. Bu depo portföy amacıyla herkese açıktır; kodun izinsiz kopyalanması, dağıtılması veya ticari kullanımı serbest değildir. Ayrıntı için `LICENSE` dosyasına bakın.
+
+Tek bir fotoğraf yükleyin, üzerine fareyle veya dokunarak istediğiniz sayıda serbest kırpma alanı çizin; alanları taşıyın, boyutlandırın, çoğaltın, istediklerinizin arka planını silin ve tek tek veya ZIP olarak dışa aktarın.
 
 ---
 
-## 🚀 Çalışma Modları ve Özellikleri
+## 🚀 Özellikler
 
-### 1. Mod: Toplu Fotoğraf Kırpma (Bulk Cropper)
-- **Toplu Yükleme:** Onlarca görseli sürükle-bırak ile aynı anda ekleme.
-- **Hazır En-Boy Oranları:** Serbest, 1:1 (Kare), 4:3, 3:2, 16:9, 9:16 (Dikey), 3:4, 2:3 ve Özel Oran (W:H).
-- **Hassas Konumlandırma:** Merkez, Üst, Alt, Sol, Sağ butonları ile Yatay (X), Dikey (Y) ve Kapsama Ölçeği (%30 - %100) slider'ları.
-- **Akıllı Çözünürlük:** Farklı çözünürlükteki görsellerin her birinin kendi doğal boyutlarına göre bozulmadan kırpılması.
-- **Canlı Kart Önizlemesi:** Ortak ayarlar değiştikçe kartlardaki Canvas önizlemelerinin anında güncellenmesi.
-- **Toplu İndirme:** `kirpilmis-gorseller.zip` olarak tek tıkla indirme.
-
-### 2. Mod: Çoklu Serbest Kırpma (Multi-Crop Studio)
-- **Serbest Çizim:** Fotoğrafın üzerinde fareyle tıklayıp sürükleyerek (veya mobilde parmağınızla) istediğiniz boyutlarda dikdörtgen alanlar oluşturma.
-- **Sınırsız Alan Desteği:** Tek görsel üzerinde 10, 20 veya daha fazla bağımsız kırpma alanı tanımlayabilme.
+- **Serbest Çizim:** Fotoğrafın üzerinde tıklayıp sürükleyerek (veya mobilde parmağınızla) dikdörtgen alanlar oluşturma.
+- **Sınırsız Alan Desteği:** Tek görsel üzerinde 10, 20 veya daha fazla bağımsız kırpma alanı.
 - **Gelişmiş Düzenleme:**
   - Alanı fareyle tutup taşıma (görsel sınırları dışına taşmaz).
   - 8 yönlü tutamaçlarla (köşeler ve kenarlar) boyutlandırma.
-  - Seçili alanı çoğaltma (Ctrl+D veya butonla).
-  - Seçili alanı silme (Delete / Backspace tuşu veya butonla).
-- **Geri Al & Yinele (Undo/Redo):**
-  - Yapılan tüm çizim, taşıma ve boyutlandırma adımları geri alınabilir (`Ctrl+Z`) ve yinelenebilir (`Ctrl+Y`).
-- **Piksel Doğruluğunda Koordinat Dönüşümü:**
-  - Kullanıcının ekranda gördüğü görsel boyutu ne olursa olsun (küçültülmüş, yakınlaştırılmış veya büyütülmüş), tüm koordinatlar ve kırpma işlemleri **orijinal fotoğrafın gerçek piksellerine** dönüştürülerek hesaplanır.
-- **Yakınlaştırma ve Sığdırma:**
-  - Uzaklaştır (`-`), Yakınlaştır (`+`) ve Tek Tıkla Sığdır butonları.
-  - `Ctrl + Fare Tekerleği` ile interaktif yakınlaştırma.
-- **Kırpma Listesi (Sağ Panel):**
-  - Oluşturulan tüm alanların numara, mini canlı önizleme, piksel boyutları (W × H) ve konum (X, Y) bilgileri.
-  - Listeden alana tıklayarak sahnede o alanı seçebilme.
-- **Dışa Aktarma Seçenekleri:**
-  - Seçili alanı indir (`kirpim-01.png` vb.).
-  - Tüm alanları tek tek indir.
-  - Tüm alanları tek bir ZIP içinde indir (`coklu-kirpimlar.zip`).
-  - Çıktı formatları: PNG (kayıpsız ve şeffaf), JPEG (kalite ayarlı, beyaz zemin korumalı), WebP.
+  - Seçili alanı çoğaltma (Ctrl+D veya butonla) ve silme (Delete / Backspace veya butonla).
+- **Geri Al & Yinele:** Çizim, taşıma, boyutlandırma ve arka plan silme adımları geri alınabilir (`Ctrl+Z`) ve yinelenebilir (`Ctrl+Y`).
+- **Arka Plan Silme (Çevrimdışı):**
+  - Sağ paneldeki onay kutularıyla (veya "Tümünü seç") alanları işaretleyin, **"Seçililerin Arka Planını Sil"** butonuna basın.
+  - Alanın kenarlarındaki baskın renk arka plan kabul edilir; kenarlara bağlı benzer renkli pikseller şeffaf yapılır, nesne kenarları yumuşatılır.
+  - **Renk Toleransı** kaydırıcısı ile ne kadar benzer rengin silineceği ayarlanır.
+  - **"İç boşluklardaki aynı rengi de sil"** seçeneği, kenara bağlı olmayan (ör. bir harfin ya da halkanın içindeki) aynı renkli bölgeleri de siler.
+  - Sonuç tuval üzerinde damalı zeminle anında gösterilir; alan taşınır veya boyutlandırılırsa yeni bölge için otomatik yeniden hesaplanır.
+  - **"Geri Getir"** ile işaretli alanların orijinal arka planı geri yüklenir.
+  - Düz / tek renkli zeminlerde (stüdyo çekimi, beyaz fon, belge, logo) en iyi sonucu verir; karmaşık fotoğraf arka planları için uygun değildir.
+- **Piksel Doğruluğunda Koordinatlar:** Ekrandaki görüntü boyutu ne olursa olsun tüm kırpmalar **orijinal fotoğrafın gerçek pikselleri** üzerinden yapılır.
+- **Yakınlaştırma ve Sığdırma:** `-` / `+` / Sığdır butonları ve `Ctrl + Fare Tekerleği`.
+- **Kırpma Listesi (Sağ Panel):** Her alan için numara, mini önizleme, piksel boyutları ve konum; tıklayarak seçme, isme tıklayarak yeniden adlandırma.
+- **Dışa Aktarma:**
+  - Seçili alanı, tüm alanları tek tek veya tek bir ZIP içinde (`coklu-kirpimlar.zip`) indirme.
+  - Çıktı formatları: PNG (kayıpsız, şeffaf), JPEG (kalite ayarlı, beyaz zemin), WebP.
 
 ---
 
-## ⌨️ Klavye Kısayolları (Çoklu Kırpma Modu)
+## ⌨️ Klavye Kısayolları
 
 | Kısayol | İşlev |
 |---|---|
-| `Ctrl + Z` / `Cmd + Z` | Son işlemi Geri Al (Undo) |
-| `Ctrl + Y` / `Ctrl + Shift + Z` | Geri alınan işlemi Yinele (Redo) |
+| `Ctrl + Z` / `Cmd + Z` | Son işlemi Geri Al |
+| `Ctrl + Y` / `Ctrl + Shift + Z` | Geri alınan işlemi Yinele |
 | `Delete` / `Backspace` | Seçili kırpma alanını sil |
 | `Ctrl + D` | Seçili kırpma alanını çoğalt |
 | `Ctrl + Fare Tekerleği` | Fotoğrafı yakınlaştır / uzaklaştır |
@@ -60,17 +52,17 @@ Uygulama iki güçlü çalışma modu sunar:
 
 ```
 TopluGorselKirpma/
-├── index.html        # Semantik HTML5 arayüzü, mod sekmeleri ve etkileşimli sahneler
-├── style.css         # Modern, sade, duyarlı (responsive) CSS tasarım sistemi
-├── script.js         # Toplu kırpıcı, etkileşimli çoklu kırpma motoru ve ZIP yöneticisi
-└── README.md         # Kullanım kılavuzu ve teknik mimari detayları
+├── index.html        # HTML5 arayüzü ve etkileşimli çalışma alanı
+├── style.css         # Sade, duyarlı (responsive) CSS tasarım sistemi
+├── script.js         # Çoklu kırpma motoru, arka plan silme ve ZIP yöneticisi
+└── README.md         # Kullanım kılavuzu
 ```
 
 ---
 
 ## 💻 Bilgisayarda Nasıl Çalıştırılır?
 
-Bu uygulama tamamen sunucusuz (client-side) çalışır. Harici bir backend veya Node/PHP kurulumu gerektirmez.
+Uygulama tamamen sunucusuz (client-side) çalışır. Harici bir backend veya Node/PHP kurulumu gerektirmez.
 
 ### 1. Yöntem: Doğrudan Tarayıcıda Açma (En Kolay)
 1. `c:\Mehmet\Projeler\TopluGorselKirpma` klasörünü açın.
@@ -93,13 +85,12 @@ Bu uygulama tamamen sunucusuz (client-side) çalışır. Harici bir backend veya
 ## 📦 Bağımlılıklar
 
 - **JSZip (v3.10.1):** CDN üzerinden yüklenir (`https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js`).
-- **Gelişmiş Çevrimdışı (Offline) Desteği:** CDN erişimi engellense veya internet bağlantısı olmasa dahi, `script.js` içerisindeki **yerleşik Pure-JS ZIP motoru** kesintisiz çalışarak standartlara uygun `.zip` arşivi üretir.
-- Harici hiçbir ücretli kütüphane veya backend servisi kullanılmamıştır.
+- **Çevrimdışı Destek:** CDN erişimi olmasa dahi `script.js` içindeki **yerleşik Pure-JS ZIP motoru** standartlara uygun `.zip` arşivi üretir. Arka plan silme de tamamen yerel çalışır, hiçbir model veya kütüphane indirmez.
 
 ---
 
 ## ⚠️ Bilinen Tarayıcı ve Format Sınırlamaları
 
-1. **Animasyonlu GIF'ler:** Canvas API doğası gereği animasyonlu GIF'lerin ilk karesini statik görsel olarak işler.
-2. **Şeffaflık (JPEG vs PNG):** PNG formatı şeffaflığı tam korur. JPEG seçildiğinde, şeffaf kısımlarda siyah leke oluşmasını önlemek amacıyla arka plan otomatik olarak beyazla doldurulur.
+1. **Animasyonlu GIF'ler:** Canvas API, animasyonlu GIF'lerin ilk karesini statik görsel olarak işler.
+2. **Şeffaflık (JPEG vs PNG):** PNG ve WebP şeffaflığı korur. JPEG seçildiğinde şeffaf kısımlar (silinen arka planlar dahil) beyazla doldurulur.
 3. **Maksimum Canvas Boyutu:** Modern tarayıcılarda tek seferde yaklaşık 16.384 × 16.384 piksele kadar görsel kırpılabilir.
