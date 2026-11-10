@@ -2,6 +2,8 @@
 
 Modern, sade, hızlı ve tamamen tarayıcı üzerinde (%100 istemci taraflı) çalışan kapsamlı görsel kırpma uygulaması.
 
+**Canlı sürüm:** https://mehmetkarakafa.github.io/TopliResimKirpma/
+
 Uygulama iki güçlü çalışma modu sunar:
 1. **Toplu Fotoğraf Kırpma:** Birden fazla fotoğrafı aynı anda yükleyin, ortak en-boy oranlarını ve konumlandırmayı seçin, tek tıkla toplu ZIP indirin.
 2. **Çoklu Serbest Kırpma (Yeni!):** Tek bir fotoğraf yükleyin, üzerine fareyle veya dokunarak istediğiniz sayıda serbest kırpma alanı çizin, taşıyın, boyutlandırın, çoğaltın ve tek tek veya ZIP olarak dışa aktarın.
@@ -59,7 +61,7 @@ Uygulama iki güçlü çalışma modu sunar:
 ## 📂 Proje Dosya Yapısı
 
 ```
-TopluGorselKirpma/
+TopliResimKirpma/
 ├── index.html        # Semantik HTML5 arayüzü, mod sekmeleri ve etkileşimli sahneler
 ├── style.css         # Modern, sade, duyarlı (responsive) CSS tasarım sistemi
 ├── script.js         # Toplu kırpıcı, etkileşimli çoklu kırpma motoru ve ZIP yöneticisi
@@ -73,18 +75,17 @@ TopluGorselKirpma/
 Bu uygulama tamamen sunucusuz (client-side) çalışır. Harici bir backend veya Node/PHP kurulumu gerektirmez.
 
 ### 1. Yöntem: Doğrudan Tarayıcıda Açma (En Kolay)
-1. `c:\Mehmet\Projeler\TopluGorselKirpma` klasörünü açın.
+1. Depoyu indirin ya da klonlayın ve klasörünü açın.
 2. `index.html` dosyasına çift tıklayarak modern bir web tarayıcısında (Chrome, Edge, Firefox, Brave, Safari) açın.
 
 ### 2. Yöntem: Yerel Sunucu ile Açma
 - **VS Code Live Server:** `index.html` üzerinde sağ tıklayıp *"Open with Live Server"* seçeneğini tıklayın.
 - **Node.js ile:**
   ```bash
-  npx serve c:\Mehmet\Projeler\TopluGorselKirpma
+  npx serve .
   ```
 - **Python ile:**
   ```bash
-  cd c:\Mehmet\Projeler\TopluGorselKirpma
   python -m http.server 8080
   ```
 
