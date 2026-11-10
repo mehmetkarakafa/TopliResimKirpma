@@ -65,18 +65,17 @@ TopluGorselKirpma/
 Uygulama tamamen sunucusuz (client-side) çalışır. Harici bir backend veya Node/PHP kurulumu gerektirmez.
 
 ### 1. Yöntem: Doğrudan Tarayıcıda Açma (En Kolay)
-1. `c:\Mehmet\Projeler\TopluGorselKirpma` klasörünü açın.
+1. Depoyu indirin ya da klonlayın ve klasörünü açın.
 2. `index.html` dosyasına çift tıklayarak modern bir web tarayıcısında (Chrome, Edge, Firefox, Brave, Safari) açın.
 
 ### 2. Yöntem: Yerel Sunucu ile Açma
 - **VS Code Live Server:** `index.html` üzerinde sağ tıklayıp *"Open with Live Server"* seçeneğini tıklayın.
 - **Node.js ile:**
   ```bash
-  npx serve c:\Mehmet\Projeler\TopluGorselKirpma
+  npx serve .
   ```
 - **Python ile:**
   ```bash
-  cd c:\Mehmet\Projeler\TopluGorselKirpma
   python -m http.server 8080
   ```
 
