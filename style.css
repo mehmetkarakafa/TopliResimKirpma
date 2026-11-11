@@ -608,62 +608,6 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* Duyarlılık (Responsive Tasarım) */
-@media (max-width: 1024px) {
-  .mc-workspace-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .header-badges {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .dropzone {
-    padding: 2rem 1rem;
-  }
-
-  .toast-container {
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    width: auto;
-  }
-
-  .mc-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mc-toolbar-left,
-  .mc-toolbar-center,
-  .mc-toolbar-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .mc-export-body {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mc-export-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .mc-export-actions .btn {
-    width: 100%;
-  }
-}
-
 /* ==========================================================================
    Çoklu Serbest Kırpma Stilleri
    ========================================================================== */
@@ -1377,4 +1321,61 @@ body {
   background-color: var(--color-surface);
 }
 
+/* Duyarlılık (Responsive Tasarım)
+   Dosyanın sonunda durmalı: yukarıdaki temel kuralları ezebilmesi için. */
+@media (max-width: 1024px) {
+  .mc-workspace-layout {
+    grid-template-columns: 1fr;
+  }
+}
 
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-badges {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dropzone {
+    padding: 2rem 1rem;
+  }
+
+  .toast-container {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    width: auto;
+  }
+
+  .mc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mc-toolbar-left,
+  .mc-toolbar-center,
+  .mc-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;   /* dar ekranda düğmeler alt satıra geçsin, sayfa yana taşmasın */
+    row-gap: 0.5rem;
+  }
+
+  .mc-export-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mc-export-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .mc-export-actions .btn {
+    width: 100%;
+  }
+}
